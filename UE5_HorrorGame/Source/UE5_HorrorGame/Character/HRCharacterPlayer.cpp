@@ -1,0 +1,439 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "Character/HRCharacterPlayer.h"
+
+#include "Components/CapsuleComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+
+#include "Camera/CameraComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+
+#include "InputMappingContext.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
+
+#include "HRCharacterControlData.h"
+
+// Sets default values
+AHRCharacterPlayer::AHRCharacterPlayer()
+{
+	// Pawn
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationYaw = false;
+	bUseControllerRotationRoll = false;
+
+	// Movement
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f);
+	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
+
+	GetCharacterMovement()->JumpZVelocity = 500.0f;
+	GetCharacterMovement()->AirControl = 0.35f;
+	GetCharacterMovement()->MaxWalkSpeed = 500.0f;
+	GetCharacterMovement()->MinAnalogWalkSpeed = 20.0f;
+
+	// Capsule
+	GetCapsuleComponent()->InitCapsuleSize(42.0f, 96.0f);
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Pawn_1"));
+
+	// Mesh ( test )
+	GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -100.0f), FRotator(0.0f, -90.0f, 0.0f));
+	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+	GetMesh()->SetCollisionProfileName(TEXT("CharacterMesh"));
+
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> CharacterMeshRef(TEXT("/Script/Engine.SkeletalMesh'/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple'"));
+	if (CharacterMeshRef.Object)
+	{
+		GetMesh()->SetSkeletalMesh(CharacterMeshRef.Object);
+	}
+
+	static ConstructorHelpers::FClassFinder<UAnimInstance> AnimInstanceClassRef(TEXT("/Game/Characters/Mannequins/Animations/ABP_Manny.ABP_Manny_C"));
+	if (AnimInstanceClassRef.Class)
+	{
+		GetMesh()->SetAnimInstanceClass(AnimInstanceClassRef.Class);
+	}
+
+	// Camera
+
+	CurrCharacterControlType = ECharacterControlType::First;
+
+		// fpv
+	SpringArm_Fpv = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm_Fpv"));
+	SpringArm_Fpv->SetupAttachment(RootComponent);
+	Camera_Fpv = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera_Fpv"));
+	Camera_Fpv->SetupAttachment(SpringArm_Fpv, USpringArmComponent::SocketName);
+
+	SpringArm_Fpv->TargetArmLength = 0.0f;
+	SpringArm_Fpv->bUsePawnControlRotation = true;
+	SpringArm_Fpv->bInheritPitch = false;
+	SpringArm_Fpv->bInheritYaw = false;
+	SpringArm_Fpv->bInheritRoll = false;
+	SpringArm_Fpv->bDoCollisionTest = false;
+	Camera_Fpv->bUsePawnControlRotation = true;
+	
+		// shoulder
+	SpringArm_Shoulder = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm_Shoulder"));
+	SpringArm_Shoulder->SetupAttachment(RootComponent);
+	Camera_Shoulder = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera_Shoulder"));
+	Camera_Shoulder->SetupAttachment(SpringArm_Shoulder, USpringArmComponent::SocketName);
+
+	SpringArm_Shoulder->TargetArmLength = 500.0f;
+	SpringArm_Shoulder->bUsePawnControlRotation = true;
+	SpringArm_Shoulder->bInheritPitch = true;
+	SpringArm_Shoulder->bInheritYaw = true;
+	SpringArm_Shoulder->bInheritRoll = true;
+	SpringArm_Shoulder->bDoCollisionTest = true;
+	Camera_Shoulder->bUsePawnControlRotation = false;
+
+		// quarter
+	SpringArm_Quarter = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm_Quarter"));
+	SpringArm_Quarter->SetupAttachment(RootComponent);
+	Camera_Quarter = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera_Quarter"));
+	Camera_Quarter->SetupAttachment(SpringArm_Quarter, USpringArmComponent::SocketName);
+
+	SpringArm_Quarter->SetRelativeRotation(FRotator(-50.0f, 90.0f, 0.0f));
+	SpringArm_Quarter->TargetArmLength = 800.0f;
+	SpringArm_Quarter->bUsePawnControlRotation = true;
+	SpringArm_Quarter->bInheritPitch = false;
+	SpringArm_Quarter->bInheritYaw = false;
+	SpringArm_Quarter->bInheritRoll = false;
+	SpringArm_Quarter->bDoCollisionTest = false;
+	Camera_Quarter->bUsePawnControlRotation = false;
+
+
+	// Input
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputChangeActionControlRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ChangeControl.IA_ChangeControl'"));
+	if (nullptr != InputChangeActionControlRef.Object)
+	{
+		ChangeControlAction = InputChangeActionControlRef.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionJumpRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_Jump.IA_Jump'"));
+	if (nullptr != InputActionJumpRef.Object)
+	{
+		JumpAction = InputActionJumpRef.Object;
+	}
+		// FPV
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionFpvMoveRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_FirstPersonViewMove.IA_FirstPersonViewMove'"));
+	if (nullptr != InputActionFpvMoveRef.Object)
+	{
+		FirstPersonViewMoveAction = InputActionFpvMoveRef.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionFpvLookRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_FirstPersonViewLook.IA_FirstPersonViewLook'"));
+	if (nullptr != InputActionFpvLookRef.Object)
+	{
+		FirstPersonViewLookAction = InputActionFpvLookRef.Object;
+	}
+		// Shoulder
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionShMoveRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ShoulderViewMove.IA_ShoulderViewMove'"));
+	if (nullptr != InputActionShMoveRef.Object)
+	{
+		ShoulderViewMoveAction = InputActionShMoveRef.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionShLookRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ShoulderViewLook.IA_ShoulderViewLook'"));
+	if (nullptr != InputActionShLookRef.Object)
+	{
+		ShoulderViewLookAction = InputActionShLookRef.Object;
+	}
+		// Quarter
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionQaMoveRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_QuarterViewMove.IA_QuarterViewMove'"));
+	if (nullptr != InputActionQaMoveRef.Object)
+	{
+		QuarterViewMoveAction = InputActionQaMoveRef.Object;
+	}
+
+	// view details data asset
+	static ConstructorHelpers::FObjectFinder<UHRCharacterControlData> FirstDataRef(TEXT("/Script/UE5_HorrorGame.HRCharacterControlData'/Game/CharacterControl/HRC_FirstPersonView.HRC_FirstPersonView'"));
+	if (FirstDataRef.Object)
+	{
+		CharacterControlManager.Add(ECharacterControlType::First, FirstDataRef.Object);
+	}
+	static ConstructorHelpers::FObjectFinder<UHRCharacterControlData> ShoulderDataRef(TEXT("/Script/UE5_HorrorGame.HRCharacterControlData'/Game/CharacterControl/HRC_ShoulderView.HRC_ShoulderView'"));
+	if (ShoulderDataRef.Object)
+	{
+		CharacterControlManager.Add(ECharacterControlType::Shoulder, ShoulderDataRef.Object);
+	}
+	static ConstructorHelpers::FObjectFinder<UHRCharacterControlData> QuarterDataRef(TEXT("/Script/UE5_HorrorGame.HRCharacterControlData'/Game/CharacterControl/HRC_QuarterView.HRC_QuarterView'"));
+	if (QuarterDataRef.Object)
+	{
+		CharacterControlManager.Add(ECharacterControlType::Quarter, QuarterDataRef.Object);
+	}
+
+
+}
+
+void AHRCharacterPlayer::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// set first to fpv
+	APlayerController* PlayerController = CastChecked<APlayerController>(GetController());
+	PlayerController->SetViewTarget(Camera_Fpv->GetOwner());
+
+	Camera_Fpv->SetActive(true);
+	Camera_Shoulder->SetActive(false);
+	Camera_Quarter->SetActive(false);
+
+	SetCharacterControl(CurrCharacterControlType);
+}
+
+// IMC : mapping input to specipic action
+// SetupPlayerInputComponent : bind trigger to specific function 
+// FInputActionValue : automatically processed when the player possess the pawn
+void AHRCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent);
+
+	EnhancedInputComponent->BindAction(ChangeControlAction, ETriggerEvent::Triggered, this, &AHRCharacterPlayer::ChangeCharacterControl);
+
+	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
+	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+
+	// using customized func
+	EnhancedInputComponent->BindAction(FirstPersonViewMoveAction, ETriggerEvent::Triggered, this, &AHRCharacterPlayer::FirstPersonViewMove);
+	EnhancedInputComponent->BindAction(FirstPersonViewLookAction, ETriggerEvent::Triggered, this, &AHRCharacterPlayer::FirstPersonViewLook);
+
+	EnhancedInputComponent->BindAction(ShoulderViewMoveAction, ETriggerEvent::Triggered, this, &AHRCharacterPlayer::ShoulderViewMove);
+	EnhancedInputComponent->BindAction(ShoulderViewLookAction, ETriggerEvent::Triggered, this, &AHRCharacterPlayer::ShoulderViewLook);
+
+	EnhancedInputComponent->BindAction(QuarterViewMoveAction, ETriggerEvent::Triggered, this, &AHRCharacterPlayer::QuarterViewMove);
+
+}
+
+// debug
+FString EnumToString(ECharacterControlType EnumValue)
+{
+	UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("ECharacterControlType"), true);
+	if (!EnumPtr) return FString("Invalid");
+
+	return EnumPtr->GetNameStringByIndex((int32)EnumValue);
+}
+
+void AHRCharacterPlayer::ChangeCharacterControl()
+{
+	if (CurrCharacterControlType == ECharacterControlType::First)
+	{
+		SetCharacterControl(ECharacterControlType::Shoulder);
+	}
+	else if (CurrCharacterControlType == ECharacterControlType::Shoulder)
+	{
+		SetCharacterControl(ECharacterControlType::Quarter);
+	}
+	else if (CurrCharacterControlType == ECharacterControlType::Quarter)
+	{
+		SetCharacterControl(ECharacterControlType::First);
+	}
+
+	// debug
+	//UE_LOG(LogTemp, Warning, TEXT("%s\n"), *EnumToString(CurrCharacterControlType));
+	//UE_LOG(LogTemp, Warning, TEXT("Arm Length : %f\n"), CameraBoom->TargetArmLength);
+	//UE_LOG(LogTemp, Warning, TEXT("Controller Rotation: %s"), *GetControlRotation().ToString());
+	//UE_LOG(LogTemp, Warning, TEXT("SpringArm Rotation : %s\n"), *CameraBoom->GetRelativeRotation().ToString());
+	//UE_LOG(LogTemp, Warning, TEXT("SpringArm Location : %s\n"), *CameraBoom->GetComponentLocation().ToString());
+	//UE_LOG(LogTemp, Warning, TEXT("Camera Location : %s\n"), *FollowCamera->GetComponentLocation().ToString());
+	//UE_LOG(LogTemp, Warning, TEXT("Camera Rotation : %s\n"), *FollowCamera->GetComponentRotation().ToString());
+	//UE_LOG(LogTemp, Warning, TEXT("-------------------------\n"));
+
+}
+
+void AHRCharacterPlayer::SetCharacterControl(ECharacterControlType NewCharacterControlType)
+{
+	UHRCharacterControlData* NewCharacterControl = CharacterControlManager[NewCharacterControlType];
+	check(NewCharacterControl);
+
+	SetCharacterControlData(NewCharacterControl);
+
+	APlayerController* PlayerController = CastChecked<APlayerController>(GetController());
+
+	// Bring local(client) player's subsystem(which manages enhanced-input on a local player unit)
+	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+	{
+		Subsystem->ClearAllMappings();
+
+		UInputMappingContext* NewMappingContext = NewCharacterControl->InputMappingContext;
+		if (NewMappingContext)
+		{
+			Subsystem->AddMappingContext(NewMappingContext, 0);		// 0 : priority
+
+			//Subsystem->RemoveMappingContext(DefaultMappingContext);	// modifiable during runtime : remove default IMC -> add another IMC
+		}
+	}
+
+	if (NewCharacterControlType == ECharacterControlType::First)
+	{
+		//PlayerController->SetViewTargetWithBlend(Camera_Shoulder->GetOwner(), 0.5f);
+
+		Camera_Fpv->SetActive(true);
+		Camera_Shoulder->SetActive(false);
+		Camera_Quarter->SetActive(false);
+
+	}
+	else if (NewCharacterControlType == ECharacterControlType::Shoulder)
+	{
+		//PlayerController->SetViewTargetWithBlend(Camera_Quarter->GetOwner(), 0.5f);
+
+		Camera_Fpv->SetActive(false);
+		Camera_Shoulder->SetActive(true);
+		Camera_Quarter->SetActive(false);
+	}
+	else if (NewCharacterControlType == ECharacterControlType::Quarter)
+	{
+		//PlayerController->SetViewTargetWithBlend(Camera_Fpv->GetOwner(), 0.5f);
+
+		Camera_Fpv->SetActive(false);
+		Camera_Shoulder->SetActive(false);
+		Camera_Quarter->SetActive(true);
+	}
+
+	CurrCharacterControlType = NewCharacterControlType;
+}
+
+void AHRCharacterPlayer::SetCharacterControlData(const UHRCharacterControlData* CharacterControlData)
+{
+	// Pawn
+	bUseControllerRotationYaw = CharacterControlData->bUseControllerRotationYaw;
+
+	// CharacterMovement
+	GetCharacterMovement()->bOrientRotationToMovement = CharacterControlData->bOrientRotationToMovement;
+	GetCharacterMovement()->bUseControllerDesiredRotation = CharacterControlData->bUseControllerDesiredRotation;
+	GetCharacterMovement()->RotationRate = CharacterControlData->RotationRate;
+
+	// Mesh
+	GetMesh()->SetOwnerNoSee(CharacterControlData->bSetOwnerNoSee);
+}
+
+// FInputActionValue : struct that containing various input info ( refreshing every frame )
+void AHRCharacterPlayer::FirstPersonViewMove(const FInputActionValue& Value)
+{
+	FVector2D MovementVector = Value.Get<FVector2D>();
+
+	const FRotator Rotation = Controller->GetControlRotation();
+
+	// direction vector
+	// https://velog.io/@yoo06/UE5-Enhanced-Input-%EC%95%8C%EC%95%84%EB%B3%B4%EA%B8%B0
+	const FVector ForwardDirection = FRotationMatrix(Rotation).GetUnitAxis(EAxis::X);
+	const FVector RightDirection = FRotationMatrix(Rotation).GetUnitAxis(EAxis::Y);
+
+	AddMovementInput(ForwardDirection, MovementVector.X);
+	AddMovementInput(RightDirection, MovementVector.Y);
+
+}
+void AHRCharacterPlayer::FirstPersonViewLook(const FInputActionValue& Value)
+{
+	FVector2D LookAxisVector = Value.Get<FVector2D>();
+
+	AddControllerYawInput(LookAxisVector.X);
+	AddControllerPitchInput(LookAxisVector.Y);
+}
+
+void AHRCharacterPlayer::ShoulderViewMove(const FInputActionValue& Value)
+{
+	FVector2D MovementVector = Value.Get<FVector2D>();
+
+	const FRotator Rotation = Controller->GetControlRotation();
+	const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+	AddMovementInput(ForwardDirection, MovementVector.X);
+	AddMovementInput(RightDirection, MovementVector.Y);
+
+}
+void AHRCharacterPlayer::ShoulderViewLook(const FInputActionValue& Value)
+{
+	FVector2D LookAxisVector = Value.Get<FVector2D>();
+
+	AddControllerYawInput(LookAxisVector.X);
+	AddControllerPitchInput(LookAxisVector.Y);
+}
+
+//void AHRCharacterPlayer::QuarterViewMove(const FInputActionValue& Value)
+//{
+//	// 원본코드
+//	FVector2D MovementVector = Value.Get<FVector2D>();
+//
+//	float InputSizeSquared = MovementVector.SquaredLength();
+//	float MovementVectorSize = 1.0f;
+//	float MovementVectorSizeSquared = MovementVector.SquaredLength();
+//	if (MovementVectorSizeSquared > 1.0f)
+//	{
+//		MovementVector.Normalize();
+//		MovementVectorSizeSquared = 1.0f;
+//	}
+//	else
+//	{
+//		MovementVectorSize = FMath::Sqrt(MovementVectorSizeSquared);
+//	}
+//
+//	FVector MoveDirection = FVector(MovementVector.X, MovementVector.Y, 0.0f);
+//	GetController()->SetControlRotation(FRotationMatrix::MakeFromX(MoveDirection).Rotator());
+//	AddMovementInput(MoveDirection, MovementVectorSize);
+//	
+//	//// 억지로 수정한코드
+//	//FVector2D MovementVector = Value.Get<FVector2D>();
+//
+//	//	// 입력 벡터 크기 조절 (대각선 이동 속도 보정)
+//	//if (MovementVector.SquaredLength() > 1.0f)
+//	//{
+//	//	MovementVector.Normalize();
+//	//}
+//
+//	//	// 캐릭터가 바라보는 방향을 기준으로 이동 방향 계산
+//	//FRotator CameraRotation = Camera_Quarter->GetComponentRotation(); // 쿼터뷰 카메라의 회전
+//	//FRotator YawRotation(0, CameraRotation.Yaw, 0); // Yaw 회전만 추출
+//	//FVector MoveDirection = FRotationMatrix(YawRotation).GetScaledAxis(EAxis::X) * MovementVector.X + FRotationMatrix(YawRotation).GetScaledAxis(EAxis::Y) * MovementVector.Y; // forward, right vector를 이용하여 방향을 구함.
+//
+//	//AddMovementInput(MoveDirection, 1.0f);
+//
+//	//// 이동 방향이 있으면 메쉬 회전 적용 (90도 보정)
+//	//if (!MoveDirection.IsNearlyZero())
+//	//{
+//	//	FRotator TargetRotation = MoveDirection.Rotation();
+//	//	TargetRotation.Yaw -= 90.0f; // 기본 회전값 보정
+//
+//	//	GetMesh()->SetWorldRotation(TargetRotation);
+//	//}
+//
+//}
+
+void AHRCharacterPlayer::QuarterViewMove(const FInputActionValue& Value)
+{
+	FVector2D MovementVector = Value.Get<FVector2D>();
+
+	// 입력 벡터 크기 조절 (대각선 이동 속도 보정)
+	if (MovementVector.SquaredLength() > 1.0f)
+	{
+		MovementVector.Normalize();
+	}
+
+	// 쿼터뷰 카메라의 회전 값 가져오기
+	FRotator CameraRotation = Camera_Quarter->GetComponentRotation();
+	FRotator YawRotation(0, CameraRotation.Yaw, 0);
+
+	// 카메라 Yaw 회전 값을 기준으로 이동 방향 벡터 계산
+	FVector MoveDirection = FRotationMatrix(YawRotation).GetScaledAxis(EAxis::X) * MovementVector.X + FRotationMatrix(YawRotation).GetScaledAxis(EAxis::Y) * MovementVector.Y;
+
+	// 이동 방향으로 캐릭터 이동
+	AddMovementInput(MoveDirection, 1.0f);
+
+
+	// 이동 방향이 있을 때만 메쉬 회전 적용
+	if (!MoveDirection.IsNearlyZero())
+	{
+		// 이동 방향 각도 계산
+		FRotator TargetRotation = MoveDirection.Rotation();
+
+		// 메쉬 회전 시 90도 오프셋 보정 (메쉬의 초기 방향에 따라 조절)
+		TargetRotation.Yaw -= 90.0f;
+
+		// 부드러운 회전을 위해 RInterp To 사용 (선택적)
+		FRotator CurrentRotation = GetMesh()->GetComponentRotation();
+		FRotator InterpolatedRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, GetWorld()->GetDeltaSeconds(), 10.0f); // 10.0f은 보간 속도
+
+		GetMesh()->SetWorldRotation(InterpolatedRotation);
+	}
+}
