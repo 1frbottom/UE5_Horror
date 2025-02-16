@@ -42,13 +42,13 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 	GetMesh()->SetCollisionProfileName(TEXT("CharacterMesh"));
 
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> CharacterMeshRef(TEXT("/Script/Engine.SkeletalMesh'/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple'"));
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> CharacterMeshRef(TEXT("/Script/Engine.SkeletalMesh'/Game/Fab/CustomAssets_NonFab/DefaultMannequin/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple'"));
 	if (CharacterMeshRef.Object)
 	{
 		GetMesh()->SetSkeletalMesh(CharacterMeshRef.Object);
 	}
 
-	static ConstructorHelpers::FClassFinder<UAnimInstance> AnimInstanceClassRef(TEXT("/Game/Characters/Mannequins/Animations/ABP_Manny.ABP_Manny_C"));
+	static ConstructorHelpers::FClassFinder<UAnimInstance> AnimInstanceClassRef(TEXT("/Game/Fab/CustomAssets_NonFab/DefaultMannequin/Mannequins/Animations/ABP_Manny.ABP_Manny_C"));
 	if (AnimInstanceClassRef.Class)
 	{
 		GetMesh()->SetAnimInstanceClass(AnimInstanceClassRef.Class);
@@ -101,43 +101,42 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 	SpringArm_Quarter->bDoCollisionTest = false;
 	Camera_Quarter->bUsePawnControlRotation = false;
 
-
 	// Input
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputChangeActionControlRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ChangeControl.IA_ChangeControl'"));
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputChangeActionControlRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_ChangeControl.IA_ChangeControl'"));
 	if (nullptr != InputChangeActionControlRef.Object)
 	{
 		ChangeControlAction = InputChangeActionControlRef.Object;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionJumpRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_Jump.IA_Jump'"));
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionJumpRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_Jump.IA_Jump'"));
 	if (nullptr != InputActionJumpRef.Object)
 	{
 		JumpAction = InputActionJumpRef.Object;
 	}
 		// FPV
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionFpvMoveRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_FirstPersonViewMove.IA_FirstPersonViewMove'"));
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionFpvMoveRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_FirstPersonViewMove.IA_FirstPersonViewMove'"));
 	if (nullptr != InputActionFpvMoveRef.Object)
 	{
 		FirstPersonViewMoveAction = InputActionFpvMoveRef.Object;
 	}
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionFpvLookRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_FirstPersonViewLook.IA_FirstPersonViewLook'"));
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionFpvLookRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_FirstPersonViewLook.IA_FirstPersonViewLook'"));
 	if (nullptr != InputActionFpvLookRef.Object)
 	{
 		FirstPersonViewLookAction = InputActionFpvLookRef.Object;
 	}
 		// Shoulder
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionShMoveRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ShoulderViewMove.IA_ShoulderViewMove'"));
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionShMoveRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_ShoulderViewMove.IA_ShoulderViewMove'"));
 	if (nullptr != InputActionShMoveRef.Object)
 	{
 		ShoulderViewMoveAction = InputActionShMoveRef.Object;
 	}
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionShLookRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_ShoulderViewLook.IA_ShoulderViewLook'"));
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionShLookRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_ShoulderViewLook.IA_ShoulderViewLook'"));
 	if (nullptr != InputActionShLookRef.Object)
 	{
 		ShoulderViewLookAction = InputActionShLookRef.Object;
 	}
 		// Quarter
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionQaMoveRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Actions/IA_QuarterViewMove.IA_QuarterViewMove'"));
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionQaMoveRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_QuarterViewMove.IA_QuarterViewMove'"));
 	if (nullptr != InputActionQaMoveRef.Object)
 	{
 		QuarterViewMoveAction = InputActionQaMoveRef.Object;
@@ -170,7 +169,6 @@ void AHRCharacterPlayer::BeginPlay()
 	// set first to fpv
 	APlayerController* PlayerController = CastChecked<APlayerController>(GetController());
 	PlayerController->SetViewTarget(Camera_Fpv->GetOwner());
-
 	Camera_Fpv->SetActive(true);
 	Camera_Shoulder->SetActive(false);
 	Camera_Quarter->SetActive(false);
@@ -203,14 +201,14 @@ void AHRCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 }
 
-// debug
-FString EnumToString(ECharacterControlType EnumValue)
-{
-	UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("ECharacterControlType"), true);
-	if (!EnumPtr) return FString("Invalid");
-
-	return EnumPtr->GetNameStringByIndex((int32)EnumValue);
-}
+//// debug
+//FString EnumToString(ECharacterControlType EnumValue)
+//{
+//	UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("ECharacterControlType"), true);
+//	if (!EnumPtr) return FString("Invalid");
+//
+//	return EnumPtr->GetNameStringByIndex((int32)EnumValue);
+//}
 
 void AHRCharacterPlayer::ChangeCharacterControl()
 {
@@ -351,89 +349,90 @@ void AHRCharacterPlayer::ShoulderViewLook(const FInputActionValue& Value)
 	AddControllerPitchInput(LookAxisVector.Y);
 }
 
-//void AHRCharacterPlayer::QuarterViewMove(const FInputActionValue& Value)
-//{
-//	// 원본코드
-//	FVector2D MovementVector = Value.Get<FVector2D>();
-//
-//	float InputSizeSquared = MovementVector.SquaredLength();
-//	float MovementVectorSize = 1.0f;
-//	float MovementVectorSizeSquared = MovementVector.SquaredLength();
-//	if (MovementVectorSizeSquared > 1.0f)
-//	{
-//		MovementVector.Normalize();
-//		MovementVectorSizeSquared = 1.0f;
-//	}
-//	else
-//	{
-//		MovementVectorSize = FMath::Sqrt(MovementVectorSizeSquared);
-//	}
-//
-//	FVector MoveDirection = FVector(MovementVector.X, MovementVector.Y, 0.0f);
-//	GetController()->SetControlRotation(FRotationMatrix::MakeFromX(MoveDirection).Rotator());
-//	AddMovementInput(MoveDirection, MovementVectorSize);
-//	
-//	//// 억지로 수정한코드
-//	//FVector2D MovementVector = Value.Get<FVector2D>();
-//
-//	//	// 입력 벡터 크기 조절 (대각선 이동 속도 보정)
-//	//if (MovementVector.SquaredLength() > 1.0f)
-//	//{
-//	//	MovementVector.Normalize();
-//	//}
-//
-//	//	// 캐릭터가 바라보는 방향을 기준으로 이동 방향 계산
-//	//FRotator CameraRotation = Camera_Quarter->GetComponentRotation(); // 쿼터뷰 카메라의 회전
-//	//FRotator YawRotation(0, CameraRotation.Yaw, 0); // Yaw 회전만 추출
-//	//FVector MoveDirection = FRotationMatrix(YawRotation).GetScaledAxis(EAxis::X) * MovementVector.X + FRotationMatrix(YawRotation).GetScaledAxis(EAxis::Y) * MovementVector.Y; // forward, right vector를 이용하여 방향을 구함.
-//
-//	//AddMovementInput(MoveDirection, 1.0f);
-//
-//	//// 이동 방향이 있으면 메쉬 회전 적용 (90도 보정)
-//	//if (!MoveDirection.IsNearlyZero())
-//	//{
-//	//	FRotator TargetRotation = MoveDirection.Rotation();
-//	//	TargetRotation.Yaw -= 90.0f; // 기본 회전값 보정
-//
-//	//	GetMesh()->SetWorldRotation(TargetRotation);
-//	//}
-//
-//}
-
 void AHRCharacterPlayer::QuarterViewMove(const FInputActionValue& Value)
 {
+	// 원본코드, 왼쪽이 정면인것처럼 행동
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
-	// 입력 벡터 크기 조절 (대각선 이동 속도 보정)
-	if (MovementVector.SquaredLength() > 1.0f)
+	float InputSizeSquared = MovementVector.SquaredLength();
+	float MovementVectorSize = 1.0f;
+	float MovementVectorSizeSquared = MovementVector.SquaredLength();
+	if (MovementVectorSizeSquared > 1.0f)
 	{
 		MovementVector.Normalize();
+		MovementVectorSizeSquared = 1.0f;
 	}
-
-	// 쿼터뷰 카메라의 회전 값 가져오기
-	FRotator CameraRotation = Camera_Quarter->GetComponentRotation();
-	FRotator YawRotation(0, CameraRotation.Yaw, 0);
-
-	// 카메라 Yaw 회전 값을 기준으로 이동 방향 벡터 계산
-	FVector MoveDirection = FRotationMatrix(YawRotation).GetScaledAxis(EAxis::X) * MovementVector.X + FRotationMatrix(YawRotation).GetScaledAxis(EAxis::Y) * MovementVector.Y;
-
-	// 이동 방향으로 캐릭터 이동
-	AddMovementInput(MoveDirection, 1.0f);
-
-
-	// 이동 방향이 있을 때만 메쉬 회전 적용
-	if (!MoveDirection.IsNearlyZero())
+	else
 	{
-		// 이동 방향 각도 계산
-		FRotator TargetRotation = MoveDirection.Rotation();
-
-		// 메쉬 회전 시 90도 오프셋 보정 (메쉬의 초기 방향에 따라 조절)
-		TargetRotation.Yaw -= 90.0f;
-
-		// 부드러운 회전을 위해 RInterp To 사용 (선택적)
-		FRotator CurrentRotation = GetMesh()->GetComponentRotation();
-		FRotator InterpolatedRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, GetWorld()->GetDeltaSeconds(), 10.0f); // 10.0f은 보간 속도
-
-		GetMesh()->SetWorldRotation(InterpolatedRotation);
+		MovementVectorSize = FMath::Sqrt(MovementVectorSizeSquared);
 	}
+
+	FVector MoveDirection = FVector(MovementVector.X, MovementVector.Y, 0.0f);
+	GetController()->SetControlRotation(FRotationMatrix::MakeFromX(MoveDirection).Rotator());
+	AddMovementInput(MoveDirection, MovementVectorSize);
+	
+	//// 대안1, 메쉬 회전 보간함수 필요
+	//FVector2D MovementVector = Value.Get<FVector2D>();
+
+	//	// 입력 벡터 크기 조절 (대각선 이동 속도 보정)
+	//if (MovementVector.SquaredLength() > 1.0f)
+	//{
+	//	MovementVector.Normalize();
+	//}
+
+	//	// 캐릭터가 바라보는 방향을 기준으로 이동 방향 계산
+	//FRotator CameraRotation = Camera_Quarter->GetComponentRotation(); // 쿼터뷰 카메라의 회전
+	//FRotator YawRotation(0, CameraRotation.Yaw, 0); // Yaw 회전만 추출
+	//FVector MoveDirection = FRotationMatrix(YawRotation).GetScaledAxis(EAxis::X) * MovementVector.X + FRotationMatrix(YawRotation).GetScaledAxis(EAxis::Y) * MovementVector.Y; // forward, right vector를 이용하여 방향을 구함.
+
+	//AddMovementInput(MoveDirection, 1.0f);
+
+	//// 이동 방향이 있으면 메쉬 회전 적용 (90도 보정)
+	//if (!MoveDirection.IsNearlyZero())
+	//{
+	//	FRotator TargetRotation = MoveDirection.Rotation();
+	//	TargetRotation.Yaw -= 90.0f; // 기본 회전값 보정
+
+	//	GetMesh()->SetWorldRotation(TargetRotation);
+	//}
+
 }
+
+//// 대안2, fpv의 회전이 그대로 보전되어 다음 사이클에도 나오는 버그
+//void AHRCharacterPlayer::QuarterViewMove(const FInputActionValue& Value)
+//{
+//	FVector2D MovementVector = Value.Get<FVector2D>();
+//
+//	// 입력 벡터 크기 조절 (대각선 이동 속도 보정)
+//	if (MovementVector.SquaredLength() > 1.0f)
+//	{
+//		MovementVector.Normalize();
+//	}
+//
+//	// 쿼터뷰 카메라의 회전 값 가져오기
+//	FRotator CameraRotation = Camera_Quarter->GetComponentRotation();
+//	FRotator YawRotation(0, CameraRotation.Yaw, 0);
+//
+//	// 카메라 Yaw 회전 값을 기준으로 이동 방향 벡터 계산
+//	FVector MoveDirection = FRotationMatrix(YawRotation).GetScaledAxis(EAxis::X) * MovementVector.X + FRotationMatrix(YawRotation).GetScaledAxis(EAxis::Y) * MovementVector.Y;
+//
+//	// 이동 방향으로 캐릭터 이동
+//	AddMovementInput(MoveDirection, 1.0f);
+//
+//
+//	// 이동 방향이 있을 때만 메쉬 회전 적용
+//	if (!MoveDirection.IsNearlyZero())
+//	{
+//		// 이동 방향 각도 계산
+//		FRotator TargetRotation = MoveDirection.Rotation();
+//
+//		// 메쉬 회전 시 90도 오프셋 보정 (메쉬의 초기 방향에 따라 조절)
+//		TargetRotation.Yaw -= 90.0f;
+//
+//		// 부드러운 회전을 위해 RInterp To 사용 (선택적)
+//		FRotator CurrentRotation = GetMesh()->GetComponentRotation();
+//		FRotator InterpolatedRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, GetWorld()->GetDeltaSeconds(), 10.0f); // 10.0f은 보간 속도
+//
+//		GetMesh()->SetWorldRotation(InterpolatedRotation);
+//	}
+//}
