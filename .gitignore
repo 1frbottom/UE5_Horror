@@ -72,3 +72,6 @@ UE5_HorrorGame/Plugins/**/Intermediate/*
 
 # Cache files for the editor to use
 UE5_HorrorGame/DerivedDataCache/*
+
+# Huge Assets
+UE5_Horror\UE5_HorrorGame\Content\Asset\NonGit/*
