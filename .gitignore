@@ -75,3 +75,4 @@ UE5_HorrorGame/DerivedDataCache/*
 
 # Huge Assets
 UE5_HorrorGame/Content/Asset/NonGit/*
+!UE5_HorrorGame/Content/Asset/NonGit/.gitkeep
