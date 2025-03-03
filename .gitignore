@@ -74,4 +74,4 @@ UE5_HorrorGame/Plugins/**/Intermediate/*
 UE5_HorrorGame/DerivedDataCache/*
 
 # Huge Assets
-UE5_Horror\UE5_HorrorGame\Content\Asset\NonGit/*
+UE5_HorrorGame/Content/Asset/NonGit/*
