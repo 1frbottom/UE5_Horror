@@ -15,18 +15,19 @@
 
 #include "Item/HRItemBase.h"
 
-#include "Components/VerticalBox.h"
+#include "Components/GridPanel.h"
+#include "Components/CanvasPanel.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
+
+#include "UMG.h"	// ugridslot
+
 
 #include "HRCharacterControlData.h"
 
 #include "CharacterStat/HRCharacterStatComponent.h"
 #include "UI/HRWidgetComponent.h"
 #include "UI/HRHpBarWidget.h"
-
-
-
 
 AHRCharacterPlayer::AHRCharacterPlayer()
 {
@@ -585,18 +586,20 @@ void AHRCharacterPlayer::AddItemToInventory(AActor* Item)
 
 void AHRCharacterPlayer::UpdateInventoryUI()
 {
-	// 큰 패널
-	UVerticalBox* ItemPanel = Cast<UVerticalBox>(InventoryWidget->GetWidgetFromName(TEXT("ItemPanel")));
-	
-	ItemPanel->ClearChildren();
+	UCanvasPanel* ItemCanvasPanel = Cast<UCanvasPanel>(InventoryWidget->GetWidgetFromName(TEXT("ItemCanvasPanel")));
+	UGridPanel* ItemGridPanel = Cast<UGridPanel>(ItemCanvasPanel->GetChildAt(0));
+
+	ItemGridPanel->ClearChildren();
 
 	const TArray<AActor*>& Items = InventoryComponent->GetItems();
+	int32 columnN = 4;
 
-	for (AActor* Item : Items)
+	for (int32 i = 0; i < Items.Num(); i++)
 	{
-		AHRItemBase* ItemBase = Cast<AHRItemBase>(Item);
+		AHRItemBase* ItemBase = Cast<AHRItemBase>(Items[i]);
 		if (ItemBase)
 		{
+			// 위치 조정 필요
 			UUserWidget* SlotWidget = CreateWidget<UUserWidget>(GetWorld(), InventorySlotWidgetClass);
 			UImage* ItemImage = Cast<UImage>(SlotWidget->GetWidgetFromName(TEXT("ItemImage")));
 			UTextBlock* ItemName = Cast<UTextBlock>(SlotWidget->GetWidgetFromName(TEXT("ItemName")));
@@ -610,7 +613,10 @@ void AHRCharacterPlayer::UpdateInventoryUI()
 				ItemName->SetText(ItemBase->GetItemName());
 			}
 
-			ItemPanel->AddChild(SlotWidget);
+			// AddChildToGrid returns UGridSlot instance's pointer
+			UGridSlot* GridSlot = ItemGridPanel->AddChildToGrid(SlotWidget);
+			GridSlot->SetRow(i / columnN);
+			GridSlot->SetColumn(i % columnN);
 		}
 	}
 }
