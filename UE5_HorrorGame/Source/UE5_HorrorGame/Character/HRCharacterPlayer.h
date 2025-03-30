@@ -5,6 +5,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
+#include "Blueprint/UserWidget.h"
+#include "Miscellaneous/InventoryComponent.h"
+#include "Interface/HRCharacterWidgetInterface.h"
 #include "HRCharacterPlayer.generated.h"
 
 UENUM()
@@ -16,7 +19,7 @@ enum class ECharacterControlType : uint8
 };
 
 UCLASS()
-class UE5_HORRORGAME_API AHRCharacterPlayer : public ACharacter
+class UE5_HORRORGAME_API AHRCharacterPlayer : public ACharacter, public IHRCharacterWidgetInterface
 {
 	GENERATED_BODY()
 
@@ -26,6 +29,9 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+
+protected:
+	virtual void PostInitializeComponents() override;
 
 public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -39,43 +45,44 @@ protected:
 protected:
 
 		// fpv
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, Meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class USpringArmComponent> SpringArm_Fpv;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, Meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UCameraComponent> Camera_Fpv;
 
 		// shoulder
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, Meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class USpringArmComponent> SpringArm_Shoulder;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, Meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UCameraComponent> Camera_Shoulder;
 	
 		// quarter
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, Meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class USpringArmComponent> SpringArm_Quarter;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, Meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UCameraComponent> Camera_Quarter;
 
 // Input (in this project, pawn controll the input system. Not the pc)
 // using enhanced input ( add module to build.cs )
+	// view
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, Meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputAction> ChangeControlAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, Meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputAction> JumpAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, Meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputAction> FirstPersonViewMoveAction;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, Meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputAction> FirstPersonViewLookAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, Meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputAction> ShoulderViewLookAction;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, Meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputAction> ShoulderViewMoveAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, Meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputAction> QuarterViewMoveAction;
 
 	void FirstPersonViewMove(const FInputActionValue& Value);
@@ -86,15 +93,71 @@ protected:
 
 	ECharacterControlType CurrCharacterControlType;
 
-// view selection
+		// view selection
 protected:
 	void SetCharacterControlData(const class UHRCharacterControlData* CharacterControlData);
 
-	UPROPERTY(EditAnywhere, Category = CharacterControl, Meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, Category = "CharacterControl", Meta = (AllowPrivateAccess = "true"))
 	TMap<ECharacterControlType, class UHRCharacterControlData*> CharacterControlManager;
 
 	void ChangeCharacterControl();
 	void SetCharacterControl(ECharacterControlType NewCharacterControlType);
 
+	// interact
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UInputAction> InteractAction;
+
+	void Interact(/*const FInputActionValue& Value*/);
+
+// Stat
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat", Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UHRCharacterStatComponent> Stat;
+
+//public:
+//	UFUNCTION(BlueprintCallable, Category = "Stat")
+//	float GetCurrentHp() const { return CurrentHp; };
+//
+//protected:
+//	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat")
+//	float CurrentHp;
+//
+//	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stat")
+//	float MaxHp;
+//
+//	void SetHp(float NewHp) { CurrentHp = FMath::Clamp<float>(NewHp, 0.0f, MaxHp); };
+
+// UI Widget
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widget", Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UHRWidgetComponent> HpBar;
+
+	virtual void SetupCharacterWidget(class UHRUserWidget* InUserWidget) override;
+
+// Inventory
+protected:
+	// inventory actor component
+		UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+		UInventoryComponent* InventoryComponent;
+
+		void AddItemToInventory(AActor* Item);
+
+	// ui instance
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+		TSubclassOf<UUserWidget> InventoryWidgetClass;
+
+		UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+		TObjectPtr<class UUserWidget> InventoryWidget;
+
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+		TSubclassOf<UUserWidget> InventorySlotWidgetClass;
+
+		//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+		//TArray<UUserWidget*> InventorySlots;
+
+		//int32 CurrentSlotIndex = 0;
+
+	// ui update
+		void UpdateInventoryUI(const FText& ItemName, UTexture2D* ItemIcon);
 
 };

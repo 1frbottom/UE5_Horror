@@ -13,11 +13,25 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 
+#include "Item/HRItemBase.h"
+
+#include "Components/VerticalBox.h"
+#include "Components/Image.h"
+#include "Components/TextBlock.h"
+
 #include "HRCharacterControlData.h"
 
-// Sets default values
+#include "CharacterStat/HRCharacterStatComponent.h"
+#include "UI/HRWidgetComponent.h"
+#include "UI/HRHpBarWidget.h"
+
+
+
+
 AHRCharacterPlayer::AHRCharacterPlayer()
 {
+	PrimaryActorTick.bCanEverTick = true;
+
 	// Pawn
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
@@ -113,7 +127,9 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 	{
 		JumpAction = InputActionJumpRef.Object;
 	}
-		// FPV
+
+		// view
+			// FPV
 	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionFpvMoveRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_FirstPersonViewMove.IA_FirstPersonViewMove'"));
 	if (nullptr != InputActionFpvMoveRef.Object)
 	{
@@ -124,7 +140,7 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 	{
 		FirstPersonViewLookAction = InputActionFpvLookRef.Object;
 	}
-		// Shoulder
+			// Shoulder
 	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionShMoveRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_ShoulderViewMove.IA_ShoulderViewMove'"));
 	if (nullptr != InputActionShMoveRef.Object)
 	{
@@ -135,14 +151,14 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 	{
 		ShoulderViewLookAction = InputActionShLookRef.Object;
 	}
-		// Quarter
+			// Quarter
 	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionQaMoveRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_QuarterViewMove.IA_QuarterViewMove'"));
 	if (nullptr != InputActionQaMoveRef.Object)
 	{
 		QuarterViewMoveAction = InputActionQaMoveRef.Object;
 	}
 
-	// view details data asset
+		// view details data asset
 	static ConstructorHelpers::FObjectFinder<UHRCharacterControlData> FirstDataRef(TEXT("/Script/UE5_HorrorGame.HRCharacterControlData'/Game/CharacterControl/HRC_FirstPersonView.HRC_FirstPersonView'"));
 	if (FirstDataRef.Object)
 	{
@@ -159,6 +175,34 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 		CharacterControlManager.Add(ECharacterControlType::Quarter, QuarterDataRef.Object);
 	}
 
+		// Interact
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionInteractRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_Interact.IA_Interact'"));
+	if (nullptr != InputActionInteractRef.Object)
+	{
+		InteractAction = InputActionInteractRef.Object;
+	}
+
+	// Stat Component
+	Stat = CreateDefaultSubobject<UHRCharacterStatComponent>(TEXT("Stat"));
+
+	// Widget Component
+	HpBar = CreateDefaultSubobject<UHRWidgetComponent>(TEXT("Widget"));
+	HpBar->SetupAttachment(GetMesh());
+	HpBar->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
+
+	static ConstructorHelpers::FClassFinder<UUserWidget> HpBarWidgetRef(TEXT("/Game/UI/WBP_HpBar.WBP_HpBar_C"));
+	if (HpBarWidgetRef.Class)
+	{
+		HpBar->SetWidgetClass(HpBarWidgetRef.Class);
+		HpBar->SetWidgetSpace(EWidgetSpace::Screen);
+		HpBar->SetDrawSize(FVector2D(150.0f, 15.0f));
+		HpBar->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	}
+
+	// Inventory Component
+	
+	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 
 }
 
@@ -167,13 +211,37 @@ void AHRCharacterPlayer::BeginPlay()
 	Super::BeginPlay();
 
 	// set first to fpv
-	APlayerController* PlayerController = CastChecked<APlayerController>(GetController());
-	PlayerController->SetViewTarget(Camera_Fpv->GetOwner());
-	Camera_Fpv->SetActive(true);
-	Camera_Shoulder->SetActive(false);
-	Camera_Quarter->SetActive(false);
+		APlayerController* PlayerController = CastChecked<APlayerController>(GetController());
 
-	SetCharacterControl(CurrCharacterControlType);
+		PlayerController->SetViewTarget(Camera_Fpv->GetOwner());
+		Camera_Fpv->SetActive(true);
+		Camera_Shoulder->SetActive(false);
+		Camera_Quarter->SetActive(false);
+
+		SetCharacterControl(CurrCharacterControlType);
+
+	// Inventory UI
+		if (InventoryWidgetClass)
+		{
+			InventoryWidget = CreateWidget<UUserWidget>(GetWorld(), InventoryWidgetClass);
+			if (InventoryWidget)
+			{
+				InventoryWidget->AddToViewport();
+				InventoryWidget->SetVisibility(ESlateVisibility::Visible);
+
+				//debug
+				UE_LOG(LogTemp, Warning, TEXT("\nInventoryWidgetClass -> InventoryWidget success\n"));
+			}
+		}
+
+}
+
+void AHRCharacterPlayer::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	// hp가 0되면 죽게하는 델리게이트, 아직구현안함, setdead안에는 hpbar->sethiddeningame(true);
+	// Stat->OnHpZero.AddUObject(this, &AHRCharacterPlayer::SetDead);
 }
 
 // IMC : mapping input to specipic action
@@ -191,6 +259,7 @@ void AHRCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
 	// using customized func
+		// view
 	EnhancedInputComponent->BindAction(FirstPersonViewMoveAction, ETriggerEvent::Triggered, this, &AHRCharacterPlayer::FirstPersonViewMove);
 	EnhancedInputComponent->BindAction(FirstPersonViewLookAction, ETriggerEvent::Triggered, this, &AHRCharacterPlayer::FirstPersonViewLook);
 
@@ -199,6 +268,8 @@ void AHRCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 	EnhancedInputComponent->BindAction(QuarterViewMoveAction, ETriggerEvent::Triggered, this, &AHRCharacterPlayer::QuarterViewMove);
 
+		// interact
+	EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &AHRCharacterPlayer::Interact);
 }
 
 //// debug
@@ -436,3 +507,114 @@ void AHRCharacterPlayer::QuarterViewMove(const FInputActionValue& Value)
 //		GetMesh()->SetWorldRotation(InterpolatedRotation);
 //	}
 //}
+
+void AHRCharacterPlayer::Interact(/*const FInputActionValue& Value*/)
+{
+	// linetrace
+	APlayerController* playerController = Cast<APlayerController>(GetController());
+	if (!playerController) return;
+
+	FVector start;
+	FVector end;
+	FHitResult hitResult;
+
+	FVector cameraLocation;
+	FRotator cameraRotation;
+	playerController->GetPlayerViewPoint(cameraLocation, cameraRotation);
+
+	start = cameraLocation;
+	end = start + (cameraRotation.Vector() * 1000.0f); // modifiable line range
+
+	// collision query decision struct
+	FCollisionQueryParams traceParams;
+	traceParams.AddIgnoredActor(this); // ignore itself (actor)
+
+	// shoot trace
+	bool bHit = GetWorld()->LineTraceSingleByChannel(
+		hitResult,
+		start,
+		end,
+		ECC_Visibility,		// collision channel
+		traceParams			// additional utility
+	);
+
+	// debug line
+	FColor lineColor = bHit ? FColor::Green : FColor::Red;
+	DrawDebugLine(GetWorld(), start, end, lineColor, false, 1.0f, 0, 0.5f);
+
+	if (bHit)
+	{
+		AActor* HitActor = hitResult.GetActor();
+		if (HitActor)
+		{
+			IHRItemInterface* Pickable = Cast<IHRItemInterface>(HitActor);
+			if (Pickable)
+			{
+				if (Pickable->IsPickable())
+				{
+					AddItemToInventory(HitActor);
+
+					Pickable->OnPickedUp();	// what should happen after picked up
+
+					UpdateInventoryUI(Cast<AHRItemBase>(HitActor)->GetItemName(), Cast<AHRItemBase>(HitActor)->GetItemImage());
+
+					// debug
+					UE_LOG(LogTemp, Warning, TEXT("Item picked up : %s"), *HitActor->GetName());
+					// UE_LOG(LogTemp, Warning, TEXT("In Inventory : %s"), *Inventory[0]->GetName());
+				}
+			}
+		}
+	}
+}
+
+void AHRCharacterPlayer::SetupCharacterWidget(UHRUserWidget* InUserWidget)
+{
+	UHRHpBarWidget* HpBarWidget = Cast<UHRHpBarWidget>(InUserWidget);
+	if (HpBarWidget)
+	{
+		HpBarWidget->SetMaxHp(Stat->GetMaxHp());
+		HpBarWidget->UpdateHpBar(Stat->GetCurrentHp());
+
+		Stat->OnHpChanged.AddUObject(HpBarWidget, &UHRHpBarWidget::UpdateHpBar);
+	}
+
+}
+
+void AHRCharacterPlayer::AddItemToInventory(AActor* Item)
+{
+	if (Item)
+	{
+		InventoryComponent->AddItem(Item);
+
+		UE_LOG(LogTemp, Warning, TEXT("Item added to inventory: %s"), *Item->GetName());
+	}
+}
+
+void AHRCharacterPlayer::UpdateInventoryUI(const FText& ItemName, UTexture2D* ItemImage)
+{
+	// 큰 패널
+	UVerticalBox* ItemPanel = Cast<UVerticalBox>(InventoryWidget->GetWidgetFromName(TEXT("ItemPanel")));
+
+	// 아이템 패널 1
+	UUserWidget* InventorySlotWidget01 = CreateWidget<UUserWidget>(GetWorld(), InventorySlotWidgetClass);
+
+	UImage* EmptyItemImage = Cast<UImage>(InventorySlotWidget01->GetWidgetFromName(TEXT("ItemImage")));
+	UTextBlock* EmptyItemName = Cast<UTextBlock>(InventorySlotWidget01->GetWidgetFromName(TEXT("ItemName")));
+
+	if (EmptyItemImage && ItemImage)
+	{
+		EmptyItemImage->SetBrushFromTexture(ItemImage);
+	}
+	if (EmptyItemName)
+	{
+		EmptyItemName->SetText(ItemName);
+	}
+
+	ItemPanel->AddChild(InventorySlotWidget01);
+}
+
+//void AHRCharacterPlayer::UpdateInventoryUI(const FText& ItemName, UTexture2D* ItemImage)
+//{
+//	// for array of slots + arrangement of slots
+//}
+
