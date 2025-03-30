@@ -106,8 +106,12 @@ protected:
 	// interact
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputAction> InteractAction;
+	void Interact();
 
-	void Interact(/*const FInputActionValue& Value*/);
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UInputAction> ToggleInventoryAction;
+	void ToggleInventory();
+
 
 // Stat
 protected:
@@ -152,12 +156,7 @@ protected:
 		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 		TSubclassOf<UUserWidget> InventorySlotWidgetClass;
 
-		//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
-		//TArray<UUserWidget*> InventorySlots;
-
-		//int32 CurrentSlotIndex = 0;
-
 	// ui update
-		void UpdateInventoryUI(const FText& ItemName, UTexture2D* ItemIcon);
+		void UpdateInventoryUI();
 
 };

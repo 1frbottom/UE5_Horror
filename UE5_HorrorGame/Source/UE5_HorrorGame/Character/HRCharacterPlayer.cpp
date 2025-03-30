@@ -182,6 +182,12 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 		InteractAction = InputActionInteractRef.Object;
 	}
 
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionToggleInventoryRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_ToggleInventory.IA_ToggleInventory'"));
+	if (nullptr != InputActionToggleInventoryRef.Object)
+	{
+		ToggleInventoryAction = InputActionToggleInventoryRef.Object;
+	}
+
 	// Stat Component
 	Stat = CreateDefaultSubobject<UHRCharacterStatComponent>(TEXT("Stat"));
 
@@ -201,8 +207,7 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 	}
 
 	// Inventory Component
-	
-	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
+		InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 
 }
 
@@ -270,6 +275,7 @@ void AHRCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 		// interact
 	EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &AHRCharacterPlayer::Interact);
+	EnhancedInputComponent->BindAction(ToggleInventoryAction, ETriggerEvent::Triggered, this, &AHRCharacterPlayer::ToggleInventory);
 }
 
 //// debug
@@ -508,7 +514,7 @@ void AHRCharacterPlayer::QuarterViewMove(const FInputActionValue& Value)
 //	}
 //}
 
-void AHRCharacterPlayer::Interact(/*const FInputActionValue& Value*/)
+void AHRCharacterPlayer::Interact()
 {
 	// linetrace
 	APlayerController* playerController = Cast<APlayerController>(GetController());
@@ -556,14 +562,70 @@ void AHRCharacterPlayer::Interact(/*const FInputActionValue& Value*/)
 
 					Pickable->OnPickedUp();	// what should happen after picked up
 
-					UpdateInventoryUI(Cast<AHRItemBase>(HitActor)->GetItemName(), Cast<AHRItemBase>(HitActor)->GetItemImage());
-
 					// debug
 					UE_LOG(LogTemp, Warning, TEXT("Item picked up : %s"), *HitActor->GetName());
-					// UE_LOG(LogTemp, Warning, TEXT("In Inventory : %s"), *Inventory[0]->GetName());
 				}
 			}
 		}
+	}
+}
+
+void AHRCharacterPlayer::AddItemToInventory(AActor* Item)
+{
+	if (Item)
+	{
+		InventoryComponent->AddItem(Item);
+
+		// debug
+		UE_LOG(LogTemp, Warning, TEXT("Item added to inventory: %s"), *Item->GetName());
+
+		UpdateInventoryUI();
+	}
+}
+
+void AHRCharacterPlayer::UpdateInventoryUI()
+{
+	// 큰 패널
+	UVerticalBox* ItemPanel = Cast<UVerticalBox>(InventoryWidget->GetWidgetFromName(TEXT("ItemPanel")));
+	
+	ItemPanel->ClearChildren();
+
+	const TArray<AActor*>& Items = InventoryComponent->GetItems();
+
+	for (AActor* Item : Items)
+	{
+		AHRItemBase* ItemBase = Cast<AHRItemBase>(Item);
+		if (ItemBase)
+		{
+			UUserWidget* SlotWidget = CreateWidget<UUserWidget>(GetWorld(), InventorySlotWidgetClass);
+			UImage* ItemImage = Cast<UImage>(SlotWidget->GetWidgetFromName(TEXT("ItemImage")));
+			UTextBlock* ItemName = Cast<UTextBlock>(SlotWidget->GetWidgetFromName(TEXT("ItemName")));
+
+			if (ItemImage && ItemBase->GetItemImage())
+			{
+				ItemImage->SetBrushFromTexture(ItemBase->GetItemImage());
+			}
+			if (ItemName)
+			{
+				ItemName->SetText(ItemBase->GetItemName());
+			}
+
+			ItemPanel->AddChild(SlotWidget);
+		}
+	}
+}
+
+// TODO : mouse cursor over
+void AHRCharacterPlayer::ToggleInventory()
+{
+	if (InventoryWidget->IsInViewport())
+	{
+		InventoryWidget->RemoveFromViewport();
+	}
+	else
+	{
+		InventoryWidget->AddToViewport();
+		UpdateInventoryUI();
 	}
 }
 
@@ -577,44 +639,5 @@ void AHRCharacterPlayer::SetupCharacterWidget(UHRUserWidget* InUserWidget)
 
 		Stat->OnHpChanged.AddUObject(HpBarWidget, &UHRHpBarWidget::UpdateHpBar);
 	}
-
 }
-
-void AHRCharacterPlayer::AddItemToInventory(AActor* Item)
-{
-	if (Item)
-	{
-		InventoryComponent->AddItem(Item);
-
-		UE_LOG(LogTemp, Warning, TEXT("Item added to inventory: %s"), *Item->GetName());
-	}
-}
-
-void AHRCharacterPlayer::UpdateInventoryUI(const FText& ItemName, UTexture2D* ItemImage)
-{
-	// 큰 패널
-	UVerticalBox* ItemPanel = Cast<UVerticalBox>(InventoryWidget->GetWidgetFromName(TEXT("ItemPanel")));
-
-	// 아이템 패널 1
-	UUserWidget* InventorySlotWidget01 = CreateWidget<UUserWidget>(GetWorld(), InventorySlotWidgetClass);
-
-	UImage* EmptyItemImage = Cast<UImage>(InventorySlotWidget01->GetWidgetFromName(TEXT("ItemImage")));
-	UTextBlock* EmptyItemName = Cast<UTextBlock>(InventorySlotWidget01->GetWidgetFromName(TEXT("ItemName")));
-
-	if (EmptyItemImage && ItemImage)
-	{
-		EmptyItemImage->SetBrushFromTexture(ItemImage);
-	}
-	if (EmptyItemName)
-	{
-		EmptyItemName->SetText(ItemName);
-	}
-
-	ItemPanel->AddChild(InventorySlotWidget01);
-}
-
-//void AHRCharacterPlayer::UpdateInventoryUI(const FText& ItemName, UTexture2D* ItemImage)
-//{
-//	// for array of slots + arrangement of slots
-//}
 
