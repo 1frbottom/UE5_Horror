@@ -232,14 +232,13 @@ void AHRCharacterPlayer::BeginPlay()
 			InventoryWidget = CreateWidget<UUserWidget>(GetWorld(), InventoryWidgetClass);
 			if (InventoryWidget)
 			{
-				InventoryWidget->AddToViewport();
+				// InventoryWidget->AddToViewport();
 				InventoryWidget->SetVisibility(ESlateVisibility::Visible);
 
 				//debug
 				UE_LOG(LogTemp, Warning, TEXT("\nInventoryWidgetClass -> InventoryWidget success\n"));
 			}
 		}
-
 }
 
 void AHRCharacterPlayer::PostInitializeComponents()
@@ -586,35 +585,37 @@ void AHRCharacterPlayer::AddItemToInventory(AActor* Item)
 
 void AHRCharacterPlayer::UpdateInventoryUI()
 {
-	UCanvasPanel* ItemCanvasPanel = Cast<UCanvasPanel>(InventoryWidget->GetWidgetFromName(TEXT("ItemCanvasPanel")));
-	UGridPanel* ItemGridPanel = Cast<UGridPanel>(ItemCanvasPanel->GetChildAt(0));
+	UCanvasPanel* InventoryCanvas = Cast<UCanvasPanel>(InventoryWidget->GetWidgetFromName(TEXT("InventoryCanvas")));
 
-	ItemGridPanel->ClearChildren();
+	UBorder* InventoryBorder = Cast<UBorder>(InventoryCanvas->GetChildAt(0));
+
+	UGridPanel* InventoryGridPanel = Cast<UGridPanel>(InventoryBorder->GetChildAt(0));
+	InventoryGridPanel->ClearChildren();
 
 	const TArray<AActor*>& Items = InventoryComponent->GetItems();
-	int32 columnN = 4;
+	int32 columnN = 6;
 
 	for (int32 i = 0; i < Items.Num(); i++)
 	{
 		AHRItemBase* ItemBase = Cast<AHRItemBase>(Items[i]);
 		if (ItemBase)
 		{
-			// 위치 조정 필요
-			UUserWidget* SlotWidget = CreateWidget<UUserWidget>(GetWorld(), InventorySlotWidgetClass);
-			UImage* ItemImage = Cast<UImage>(SlotWidget->GetWidgetFromName(TEXT("ItemImage")));
-			UTextBlock* ItemName = Cast<UTextBlock>(SlotWidget->GetWidgetFromName(TEXT("ItemName")));
+			UUserWidget* InventorySlotWidget = CreateWidget<UUserWidget>(GetWorld(), InventorySlotWidgetClass);
 
-			if (ItemImage && ItemBase->GetItemImage())
+			UImage* InventorySlotItemImage = Cast<UImage>(InventorySlotWidget->GetWidgetFromName(TEXT("InventorySlotItemImage")));
+			UTextBlock* InventorySlotItemName = Cast<UTextBlock>(InventorySlotWidget->GetWidgetFromName(TEXT("InventorySlotItemName")));
+
+			if (InventorySlotItemImage && ItemBase->GetItemImage())
 			{
-				ItemImage->SetBrushFromTexture(ItemBase->GetItemImage());
+				InventorySlotItemImage->SetBrushFromTexture(ItemBase->GetItemImage());
 			}
-			if (ItemName)
+			if (InventorySlotItemName)
 			{
-				ItemName->SetText(ItemBase->GetItemName());
+				InventorySlotItemName->SetText(ItemBase->GetItemName());
 			}
 
 			// AddChildToGrid returns UGridSlot instance's pointer
-			UGridSlot* GridSlot = ItemGridPanel->AddChildToGrid(SlotWidget);
+			UGridSlot* GridSlot = InventoryGridPanel->AddChildToGrid(InventorySlotWidget);
 			GridSlot->SetRow(i / columnN);
 			GridSlot->SetColumn(i % columnN);
 		}
