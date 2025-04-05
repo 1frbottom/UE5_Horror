@@ -10,6 +10,9 @@
 #include "Interface/HRCharacterWidgetInterface.h"
 #include "HRCharacterPlayer.generated.h"
 
+
+
+
 UENUM()
 enum class ECharacterControlType : uint8
 {
@@ -110,7 +113,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputAction> ToggleInventoryAction;
-	void ToggleInventory();
+	UFUNCTION(BlueprintCallable, Category = "UI") // 블루프린트에서 구현할 함수, BlueprintCallable로 변경
+		void ToggleInventory();
 
 
 // Stat
@@ -145,18 +149,19 @@ protected:
 		UInventoryComponent* InventoryComponent;
 
 		void AddItemToInventory(AActor* Item);
+public:
+	UFUNCTION(BlueprintCallable, Category = "Components")
+	class UInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 
 	// ui instance
+protected:
 		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 		TSubclassOf<UUserWidget> InventoryWidgetClass;
 
 		UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
-		TObjectPtr<class UUserWidget> InventoryWidget;
+		class UUserWidget* InventoryWidgetInstance;
 
 		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 		TSubclassOf<UUserWidget> InventorySlotWidgetClass;
-
-	// ui update
-		void UpdateInventoryUI();
 
 };

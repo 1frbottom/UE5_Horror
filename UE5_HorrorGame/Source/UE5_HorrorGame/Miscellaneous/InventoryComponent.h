@@ -18,10 +18,8 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-public:	
-    UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Inventory")
     TArray<AActor*> Inventory;
-
+public:	
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     void AddItem(AActor* Item);
 

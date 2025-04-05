@@ -22,12 +22,16 @@
 
 #include "UMG.h"	// ugridslot
 
-
 #include "HRCharacterControlData.h"
 
 #include "CharacterStat/HRCharacterStatComponent.h"
 #include "UI/HRWidgetComponent.h"
 #include "UI/HRHpBarWidget.h"
+
+
+
+
+
 
 AHRCharacterPlayer::AHRCharacterPlayer()
 {
@@ -226,19 +230,24 @@ void AHRCharacterPlayer::BeginPlay()
 
 		SetCharacterControl(CurrCharacterControlType);
 
-	// Inventory UI
 		if (InventoryWidgetClass)
 		{
-			InventoryWidget = CreateWidget<UUserWidget>(GetWorld(), InventoryWidgetClass);
-			if (InventoryWidget)
-			{
-				// InventoryWidget->AddToViewport();
-				InventoryWidget->SetVisibility(ESlateVisibility::Visible);
+			InventoryWidgetInstance = CreateWidget<UUserWidget>(GetWorld(), InventoryWidgetClass);
 
-				//debug
-				UE_LOG(LogTemp, Warning, TEXT("\nInventoryWidgetClass -> InventoryWidget success\n"));
+			if (InventoryWidgetInstance)
+			{
+				// 생성된 위젯에 대한 추가 설정 (선택 사항)
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Inventory widget creation failure!"));
 			}
 		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Inventory widget class doesn't fixed in editor!"));
+		}
+
 }
 
 void AHRCharacterPlayer::PostInitializeComponents()
@@ -579,60 +588,23 @@ void AHRCharacterPlayer::AddItemToInventory(AActor* Item)
 		// debug
 		UE_LOG(LogTemp, Warning, TEXT("Item added to inventory: %s"), *Item->GetName());
 
-		UpdateInventoryUI();
-	}
-}
-
-void AHRCharacterPlayer::UpdateInventoryUI()
-{
-	UCanvasPanel* InventoryCanvas = Cast<UCanvasPanel>(InventoryWidget->GetWidgetFromName(TEXT("InventoryCanvas")));
-
-	UBorder* InventoryBorder = Cast<UBorder>(InventoryCanvas->GetChildAt(0));
-
-	UGridPanel* InventoryGridPanel = Cast<UGridPanel>(InventoryBorder->GetChildAt(0));
-	InventoryGridPanel->ClearChildren();
-
-	const TArray<AActor*>& Items = InventoryComponent->GetItems();
-	int32 columnN = 6;
-
-	for (int32 i = 0; i < Items.Num(); i++)
-	{
-		AHRItemBase* ItemBase = Cast<AHRItemBase>(Items[i]);
-		if (ItemBase)
+		if (InventoryWidgetInstance)
 		{
-			UUserWidget* InventorySlotWidget = CreateWidget<UUserWidget>(GetWorld(), InventorySlotWidgetClass);
-
-			UImage* InventorySlotItemImage = Cast<UImage>(InventorySlotWidget->GetWidgetFromName(TEXT("InventorySlotItemImage")));
-			UTextBlock* InventorySlotItemName = Cast<UTextBlock>(InventorySlotWidget->GetWidgetFromName(TEXT("InventorySlotItemName")));
-
-			if (InventorySlotItemImage && ItemBase->GetItemImage())
-			{
-				InventorySlotItemImage->SetBrushFromTexture(ItemBase->GetItemImage());
-			}
-			if (InventorySlotItemName)
-			{
-				InventorySlotItemName->SetText(ItemBase->GetItemName());
-			}
-
-			// AddChildToGrid returns UGridSlot instance's pointer
-			UGridSlot* GridSlot = InventoryGridPanel->AddChildToGrid(InventorySlotWidget);
-			GridSlot->SetRow(i / columnN);
-			GridSlot->SetColumn(i % columnN);
+			// 블루프린트에 있는 UpdateInventoryUI 함수 호출
+			FOutputDeviceNull n;
+			InventoryWidgetInstance->CallFunctionByNameWithArguments
+			(TEXT("UpdateInventoryUI"), n, nullptr, true);
 		}
 	}
 }
 
-// TODO : mouse cursor over
 void AHRCharacterPlayer::ToggleInventory()
 {
-	if (InventoryWidget->IsInViewport())
+	if (InventoryWidgetInstance)
 	{
-		InventoryWidget->RemoveFromViewport();
-	}
-	else
-	{
-		InventoryWidget->AddToViewport();
-		UpdateInventoryUI();
+		FOutputDeviceNull n;
+		// 블루프린트에 있는 ToggleInventory 함수 호출
+		InventoryWidgetInstance->CallFunctionByNameWithArguments(TEXT("ToggleInventory"), n, nullptr, true);
 	}
 }
 
@@ -647,4 +619,3 @@ void AHRCharacterPlayer::SetupCharacterWidget(UHRUserWidget* InUserWidget)
 		Stat->OnHpChanged.AddUObject(HpBarWidget, &UHRHpBarWidget::UpdateHpBar);
 	}
 }
-
