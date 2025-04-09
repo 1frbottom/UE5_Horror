@@ -11,8 +11,6 @@
 #include "HRCharacterPlayer.generated.h"
 
 
-
-
 UENUM()
 enum class ECharacterControlType : uint8
 {
@@ -163,5 +161,6 @@ protected:
 
 		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 		TSubclassOf<UUserWidget> InventorySlotWidgetClass;
+
 
 };

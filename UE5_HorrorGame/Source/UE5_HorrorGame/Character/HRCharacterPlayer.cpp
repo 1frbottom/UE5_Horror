@@ -31,8 +31,6 @@
 
 
 
-
-
 AHRCharacterPlayer::AHRCharacterPlayer()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -481,7 +479,6 @@ void AHRCharacterPlayer::QuarterViewMove(const FInputActionValue& Value)
 
 	//	GetMesh()->SetWorldRotation(TargetRotation);
 	//}
-
 }
 
 //// 대안2, fpv의 회전이 그대로 보전되어 다음 사이클에도 나오는 버그
@@ -579,11 +576,15 @@ void AHRCharacterPlayer::Interact()
 	}
 }
 
-void AHRCharacterPlayer::AddItemToInventory(AActor* Item)
+void AHRCharacterPlayer::AddItemToInventory(AActor* InItem)
 {
+	AHRItemBase* Item = Cast<AHRItemBase>(InItem);
 	if (Item)
 	{
 		InventoryComponent->AddItem(Item);
+
+		// delegate to HRItemBase class
+		Item->OnItemCollected.Broadcast(Item);
 
 		// debug
 		UE_LOG(LogTemp, Warning, TEXT("Item added to inventory: %s"), *Item->GetName());
@@ -603,6 +604,7 @@ void AHRCharacterPlayer::ToggleInventory()
 	if (InventoryWidgetInstance)
 	{
 		FOutputDeviceNull n;
+
 		// 블루프린트에 있는 ToggleInventory 함수 호출
 		InventoryWidgetInstance->CallFunctionByNameWithArguments(TEXT("ToggleInventory"), n, nullptr, true);
 	}

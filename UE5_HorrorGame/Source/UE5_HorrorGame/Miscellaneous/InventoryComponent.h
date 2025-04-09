@@ -28,5 +28,16 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     const TArray<AActor*>& GetItems() const;
-		
+	
+public:
+    //// note
+    //UFUNCTION(BlueprintImplementableEvent, Category = "Inventory")
+    //void OnNoteAddedToInventory();
+
+
+
+
+
+
+
 };

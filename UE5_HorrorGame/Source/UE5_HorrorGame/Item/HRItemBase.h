@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Components/SphereComponent.h"
 #include "Interface/HRItemInterface.h"
+#include "Delegates/DelegateCombinations.h"
 #include "HRItemBase.generated.h"
 
 UENUM()
@@ -17,6 +18,8 @@ enum class EItemType : uint8
 	Map,
 	QuestItem
 };
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemCollectedSignature, AHRItemBase*, Item);
 
 UCLASS()
 class UE5_HORRORGAME_API AHRItemBase : public AActor, public IHRItemInterface
@@ -86,4 +89,10 @@ public:
 	virtual bool IsPickable() const override { return bIsPickable; }
 
 	virtual void OnPickedUp() override;
+
+// delegate
+public:
+	UPROPERTY(BlueprintAssignable, Category = "Item Event")
+	FOnItemCollectedSignature OnItemCollected;
+
 };
