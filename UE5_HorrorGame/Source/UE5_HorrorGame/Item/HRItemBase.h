@@ -16,10 +16,9 @@ enum class EItemType : uint8
 	Weapon,
 	Key,
 	Map,
-	QuestItem
+	QuestItem,
+	Util
 };
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemCollectedSignature, AHRItemBase*, Item);
 
 UCLASS()
 class UE5_HORRORGAME_API AHRItemBase : public AActor, public IHRItemInterface
@@ -86,13 +85,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Item Info")
 	void SetIsPickable(bool bNewPickable) { bIsPickable = bNewPickable; }
 
+	// HRItemInterface
 	virtual bool IsPickable() const override { return bIsPickable; }
-
 	virtual void OnPickedUp() override;
 
-// delegate
-public:
-	UPROPERTY(BlueprintAssignable, Category = "Item Event")
-	FOnItemCollectedSignature OnItemCollected;
+		// for being seen in the BP
+	UFUNCTION(BlueprintImplementableEvent, Category = "HRItemInterface")
+	void BP_OnPickedUp();
 
 };

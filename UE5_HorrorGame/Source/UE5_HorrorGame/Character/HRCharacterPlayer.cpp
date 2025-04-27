@@ -14,6 +14,7 @@
 #include "EnhancedInputSubsystems.h"
 
 #include "Item/HRItemBase.h"
+#include "Interface/HRInteractable.h"
 
 #include "Components/GridPanel.h"
 #include "Components/CanvasPanel.h"
@@ -87,8 +88,10 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 	SpringArm_Fpv->bInheritYaw = false;
 	SpringArm_Fpv->bInheritRoll = false;
 	SpringArm_Fpv->bDoCollisionTest = false;
-	Camera_Fpv->bUsePawnControlRotation = true;
 	
+	Camera_Fpv->SetRelativeLocation(FVector(0.0f, 0.0f, 50.0f));
+	Camera_Fpv->bUsePawnControlRotation = true;
+
 		// shoulder
 	SpringArm_Shoulder = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm_Shoulder"));
 	SpringArm_Shoulder->SetupAttachment(RootComponent);
@@ -559,6 +562,7 @@ void AHRCharacterPlayer::Interact()
 		AActor* HitActor = hitResult.GetActor();
 		if (HitActor)
 		{
+			// Item
 			IHRItemInterface* Pickable = Cast<IHRItemInterface>(HitActor);
 			if (Pickable)
 			{
@@ -572,6 +576,14 @@ void AHRCharacterPlayer::Interact()
 					UE_LOG(LogTemp, Warning, TEXT("Item picked up : %s"), *HitActor->GetName());
 				}
 			}
+			else // not an item
+			{
+				IHRInteractable* Interactable = Cast<IHRInteractable>(HitActor);
+				if (Interactable)
+				{
+					Interactable->Interact(HitActor);
+				}
+			}
 		}
 	}
 }
@@ -582,9 +594,6 @@ void AHRCharacterPlayer::AddItemToInventory(AActor* InItem)
 	if (Item)
 	{
 		InventoryComponent->AddItem(Item);
-
-		// delegate to HRItemBase class
-		Item->OnItemCollected.Broadcast(Item);
 
 		// debug
 		UE_LOG(LogTemp, Warning, TEXT("Item added to inventory: %s"), *Item->GetName());
