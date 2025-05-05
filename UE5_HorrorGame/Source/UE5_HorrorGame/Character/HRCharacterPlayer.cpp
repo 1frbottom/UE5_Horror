@@ -14,7 +14,7 @@
 #include "EnhancedInputSubsystems.h"
 
 #include "Item/HRItemBase.h"
-#include "Interface/HRInteractable.h"
+#include "InteractableActor/HRInteractableActorBase.h"
 
 #include "Components/GridPanel.h"
 #include "Components/CanvasPanel.h"
@@ -570,7 +570,7 @@ void AHRCharacterPlayer::Interact()
 				{
 					AddItemToInventory(HitActor);
 
-					Pickable->OnPickedUp();	// what should happen after picked up
+					Pickable->OnPickedUp(this);	// what should happen after picked up
 
 					// debug
 					UE_LOG(LogTemp, Warning, TEXT("Item picked up : %s"), *HitActor->GetName());
@@ -578,10 +578,15 @@ void AHRCharacterPlayer::Interact()
 			}
 			else // not an item
 			{
-				IHRInteractable* Interactable = Cast<IHRInteractable>(HitActor);
+				IHRInteractableActorInterface* Interactable = Cast<IHRInteractableActorInterface>(HitActor);
 				if (Interactable)
 				{
-					Interactable->Interact(HitActor);
+					if (Interactable->IsInteractable())
+					{
+						// couldn't use like 'Interactable->interact();'
+						// cuz its BlueprintNativeEvent
+						IHRInteractableActorInterface::Execute_BP_Interact(HitActor, this);
+					}
 				}
 			}
 		}

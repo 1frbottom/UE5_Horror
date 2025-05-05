@@ -6,6 +6,8 @@
 #include "UObject/Interface.h"
 #include "HRItemInterface.generated.h"
 
+class AHRCharacterPlayer;
+
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
 class UHRItemInterface : public UInterface
@@ -24,7 +26,6 @@ class UE5_HORRORGAME_API IHRItemInterface
 public:
 	virtual bool IsPickable() const = 0;
 
-	virtual void OnPickedUp() = 0;			// what should happen after picked up
-
+	virtual void OnPickedUp(AHRCharacterPlayer* character) = 0;			// what should happen after picked up
 
 };

@@ -19,6 +19,16 @@ enum class ECharacterControlType : uint8
 	Quarter
 };
 
+UENUM(BlueprintType)
+enum class EKeyType : uint8
+{
+	A,
+	B,
+	C,
+	D,
+	E
+};
+
 UCLASS()
 class UE5_HORRORGAME_API AHRCharacterPlayer : public ACharacter, public IHRCharacterWidgetInterface
 {
@@ -162,5 +172,14 @@ protected:
 		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 		TSubclassOf<UUserWidget> InventorySlotWidgetClass;
 
+// Miscellaneous
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory");
+	TSet<EKeyType> KeyChain;
+public:
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	bool GetHasKey(EKeyType key) { return KeyChain.Contains(key); }
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	void SetHasKey(EKeyType key)  { KeyChain.Add(key); }
 
 };

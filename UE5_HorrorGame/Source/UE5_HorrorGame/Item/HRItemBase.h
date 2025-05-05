@@ -9,6 +9,8 @@
 #include "Delegates/DelegateCombinations.h"
 #include "HRItemBase.generated.h"
 
+class AHRCharacterPlayer;
+
 UENUM()
 enum class EItemType : uint8
 {
@@ -87,10 +89,10 @@ public:
 
 	// HRItemInterface
 	virtual bool IsPickable() const override { return bIsPickable; }
-	virtual void OnPickedUp() override;
+	virtual void OnPickedUp(AHRCharacterPlayer* character) override;
 
 		// for being seen in the BP
 	UFUNCTION(BlueprintImplementableEvent, Category = "HRItemInterface")
-	void BP_OnPickedUp();
+	void BP_OnPickedUp(AHRCharacterPlayer* character);
 
 };
