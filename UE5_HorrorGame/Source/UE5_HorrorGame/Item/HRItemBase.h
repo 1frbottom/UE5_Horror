@@ -94,5 +94,4 @@ public:
 		// for being seen in the BP
 	UFUNCTION(BlueprintImplementableEvent, Category = "HRItemInterface")
 	void BP_OnPickedUp(AHRCharacterPlayer* character);
-
 };

@@ -27,7 +27,7 @@ public:
 
 	virtual bool IsInteractable() const = 0;
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interact")
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Interact")
 	void BP_Interact(AHRCharacterPlayer* character);
 
 	//--------------------------------------------------------------------------

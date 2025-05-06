@@ -60,6 +60,9 @@ protected:
 	TObjectPtr<class USpringArmComponent> SpringArm_Fpv;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UCameraComponent> Camera_Fpv;
+		// flash light
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+	TObjectPtr<class USceneComponent> FlashlightHolder;
 
 		// shoulder
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", Meta = (AllowPrivateAccess = "true"))
@@ -73,7 +76,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UCameraComponent> Camera_Quarter;
 
-// Input (in this project, pawn controll the input system. Not the pc)
+// Input
+// in this project, pawn controll the input system. Not the pc
 // using enhanced input ( add module to build.cs )
 	// view
 protected:
@@ -124,6 +128,11 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "UI") // 블루프린트에서 구현할 함수, BlueprintCallable로 변경
 		void ToggleInventory();
 
+	// flashlight
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UInputAction> ToggleFlashlightAction;
+	void ToggleFlashLight();
+
 
 // Stat
 protected:
@@ -173,13 +182,35 @@ protected:
 		TSubclassOf<UUserWidget> InventorySlotWidgetClass;
 
 // Miscellaneous
+
+	// key
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory");
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Key")
 	TSet<EKeyType> KeyChain;
 public:
-	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	UFUNCTION(BlueprintCallable, Category = "Key")
 	bool GetHasKey(EKeyType key) { return KeyChain.Contains(key); }
-	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	UFUNCTION(BlueprintCallable, Category = "Key")
 	void SetHasKey(EKeyType key)  { KeyChain.Add(key); }
+
+	// flashlight
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Key")
+	bool hasFlashLight;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Flashlight")
+	FName FlashlightAttachSocketName;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Flashlight", Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<AHRItemBase> EquippedFlashlight;
+
+public:
+	UFUNCTION(BlueprintCallable, Category = "Flashlight")
+	void AttachFlashlight(AHRItemBase* FlashlightToAttach);
+
+	// 현재 손전등이 장착되어 있는지 확인하는 함수 (BlueprintPure로 만들면 BP에서 사용하기 편함)
+	UFUNCTION(BlueprintPure, Category = "Flashlight")
+	bool HasFlashlightEquipped() const { return hasFlashLight; }
+
 
 };
