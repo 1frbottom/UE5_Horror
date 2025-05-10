@@ -47,6 +47,9 @@ protected:
 public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+public:
+	//virtual void Tick(float DeltaTime) override;
+
 // Mesh ( test )
 protected:
 	UPROPERTY(VisibleAnywhere)

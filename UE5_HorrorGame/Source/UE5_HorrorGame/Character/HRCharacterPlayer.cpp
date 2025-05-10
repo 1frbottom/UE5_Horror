@@ -320,6 +320,13 @@ void AHRCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	}
 }
 
+//void AHRCharacterPlayer::Tick(float DeltaTime)
+//{
+//	Super::Tick(DeltaTime);
+//
+//
+//}
+
 //// debug
 //FString EnumToString(ECharacterControlType EnumValue)
 //{
