@@ -12,7 +12,8 @@ AHRGameMode::AHRGameMode()
 
 	// except for the metadatas below, using default ( by Unreal )
 
-	// Default Pawn Class ( 잠깐 주석처리했음 )
+	// in editor, i use BP_HRGameMode
+	// Default Pawn Class
 	DefaultPawnClass = AHRCharacterPlayer::StaticClass();	// class instance
 
 	// Player Controller class

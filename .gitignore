@@ -73,6 +73,9 @@ UE5_HorrorGame/Plugins/**/Intermediate/*
 # Cache files for the editor to use
 UE5_HorrorGame/DerivedDataCache/*
 
+# temp data for maps
+UE5_HorrorGame/Content/Map/LevelDevelop/_GENERATED/*
+
 # Huge Assets
 UE5_HorrorGame/Content/Asset/NonGit/*
 !UE5_HorrorGame/Content/Asset/NonGit/.gitkeep

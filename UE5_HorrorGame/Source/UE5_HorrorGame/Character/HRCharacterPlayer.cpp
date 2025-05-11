@@ -13,11 +13,31 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 
+#include "Item/HRItemBase.h"
+#include "InteractableActor/HRInteractableActorBase.h"
+
+#include "Interface/HRToggleItemInterface.h"
+
+#include "Components/GridPanel.h"
+#include "Components/CanvasPanel.h"
+#include "Components/Image.h"
+#include "Components/TextBlock.h"
+
+#include "UMG.h"	// ugridslot
+
 #include "HRCharacterControlData.h"
 
-// Sets default values
+#include "CharacterStat/HRCharacterStatComponent.h"
+#include "UI/HRWidgetComponent.h"
+#include "UI/HRHpBarWidget.h"
+
+
+
+
 AHRCharacterPlayer::AHRCharacterPlayer()
 {
+	PrimaryActorTick.bCanEverTick = true;
+
 	// Pawn
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
@@ -70,8 +90,16 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 	SpringArm_Fpv->bInheritYaw = false;
 	SpringArm_Fpv->bInheritRoll = false;
 	SpringArm_Fpv->bDoCollisionTest = false;
-	Camera_Fpv->bUsePawnControlRotation = true;
 	
+	Camera_Fpv->SetRelativeLocation(FVector(0.0f, 0.0f, 50.0f));
+	Camera_Fpv->bUsePawnControlRotation = true;
+
+			// flash light
+	FlashlightHolder = CreateDefaultSubobject<USceneComponent>(TEXT("FlashlightHolder"));
+	FlashlightHolder->SetupAttachment(Camera_Fpv);
+	FlashlightHolder->SetRelativeLocation(FVector(40.0f, -30.0f, -20.0f));
+	FlashlightHolder->SetRelativeRotation(FRotator(0.0f, 0.0f, 0.0f));
+
 		// shoulder
 	SpringArm_Shoulder = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm_Shoulder"));
 	SpringArm_Shoulder->SetupAttachment(RootComponent);
@@ -92,7 +120,7 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 	Camera_Quarter = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera_Quarter"));
 	Camera_Quarter->SetupAttachment(SpringArm_Quarter, USpringArmComponent::SocketName);
 
-	SpringArm_Quarter->SetRelativeRotation(FRotator(-50.0f, 90.0f, 0.0f));
+	SpringArm_Quarter->SetRelativeRotation(FRotator(0.0f, -30.0f, 0.0f));
 	SpringArm_Quarter->TargetArmLength = 800.0f;
 	SpringArm_Quarter->bUsePawnControlRotation = true;
 	SpringArm_Quarter->bInheritPitch = false;
@@ -113,7 +141,9 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 	{
 		JumpAction = InputActionJumpRef.Object;
 	}
-		// FPV
+
+		// view
+			// FPV
 	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionFpvMoveRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_FirstPersonViewMove.IA_FirstPersonViewMove'"));
 	if (nullptr != InputActionFpvMoveRef.Object)
 	{
@@ -124,7 +154,7 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 	{
 		FirstPersonViewLookAction = InputActionFpvLookRef.Object;
 	}
-		// Shoulder
+			// Shoulder
 	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionShMoveRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_ShoulderViewMove.IA_ShoulderViewMove'"));
 	if (nullptr != InputActionShMoveRef.Object)
 	{
@@ -135,14 +165,14 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 	{
 		ShoulderViewLookAction = InputActionShLookRef.Object;
 	}
-		// Quarter
+			// Quarter
 	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionQaMoveRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_QuarterViewMove.IA_QuarterViewMove'"));
 	if (nullptr != InputActionQaMoveRef.Object)
 	{
 		QuarterViewMoveAction = InputActionQaMoveRef.Object;
 	}
 
-	// view details data asset
+		// view details data asset
 	static ConstructorHelpers::FObjectFinder<UHRCharacterControlData> FirstDataRef(TEXT("/Script/UE5_HorrorGame.HRCharacterControlData'/Game/CharacterControl/HRC_FirstPersonView.HRC_FirstPersonView'"));
 	if (FirstDataRef.Object)
 	{
@@ -159,6 +189,50 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 		CharacterControlManager.Add(ECharacterControlType::Quarter, QuarterDataRef.Object);
 	}
 
+		// interact
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionInteractRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_Interact.IA_Interact'"));
+	if (nullptr != InputActionInteractRef.Object)
+	{
+		InteractAction = InputActionInteractRef.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionToggleInventoryRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_ToggleInventory.IA_ToggleInventory'"));
+	if (nullptr != InputActionToggleInventoryRef.Object)
+	{
+		ToggleInventoryAction = InputActionToggleInventoryRef.Object;
+	}
+		
+		// flashlight
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionFlashLightRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_FlashLight.IA_FlashLight'"));
+	if (nullptr != InputActionFlashLightRef.Object)
+	{
+		ToggleFlashlightAction = InputActionFlashLightRef.Object;
+	}
+
+	// Stat Component
+	Stat = CreateDefaultSubobject<UHRCharacterStatComponent>(TEXT("Stat"));
+
+	// Widget Component
+	HpBar = CreateDefaultSubobject<UHRWidgetComponent>(TEXT("Widget"));
+	HpBar->SetupAttachment(GetMesh());
+	HpBar->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
+
+	static ConstructorHelpers::FClassFinder<UUserWidget> HpBarWidgetRef(TEXT("/Game/UI/WBP_HpBar.WBP_HpBar_C"));
+	if (HpBarWidgetRef.Class)
+	{
+		HpBar->SetWidgetClass(HpBarWidgetRef.Class);
+		HpBar->SetWidgetSpace(EWidgetSpace::Screen);
+		HpBar->SetDrawSize(FVector2D(150.0f, 15.0f));
+		HpBar->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	}
+
+	// Inventory Component
+		InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
+
+	// Flashlight
+		FlashlightAttachSocketName = FName("Hand_Left_Socket_for_FlashLight");	// socket name
+		hasFlashLight = false;
 
 }
 
@@ -167,13 +241,41 @@ void AHRCharacterPlayer::BeginPlay()
 	Super::BeginPlay();
 
 	// set first to fpv
-	APlayerController* PlayerController = CastChecked<APlayerController>(GetController());
-	PlayerController->SetViewTarget(Camera_Fpv->GetOwner());
-	Camera_Fpv->SetActive(true);
-	Camera_Shoulder->SetActive(false);
-	Camera_Quarter->SetActive(false);
+		APlayerController* PlayerController = CastChecked<APlayerController>(GetController());
 
-	SetCharacterControl(CurrCharacterControlType);
+		PlayerController->SetViewTarget(Camera_Fpv->GetOwner());
+		Camera_Fpv->SetActive(true);
+		Camera_Shoulder->SetActive(false);
+		Camera_Quarter->SetActive(false);
+
+		SetCharacterControl(CurrCharacterControlType);
+
+		if (InventoryWidgetClass)
+		{
+			InventoryWidgetInstance = CreateWidget<UUserWidget>(GetWorld(), InventoryWidgetClass);
+
+			if (InventoryWidgetInstance)
+			{
+				// 생성된 위젯에 대한 추가 설정 (선택 사항)
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Inventory widget creation failure!"));
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Inventory widget class doesn't fixed in editor!"));
+		}
+
+}
+
+void AHRCharacterPlayer::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	// hp가 0되면 죽게하는 델리게이트, 아직구현안함, setdead안에는 hpbar->sethiddeningame(true);
+	// Stat->OnHpZero.AddUObject(this, &AHRCharacterPlayer::SetDead);
 }
 
 // IMC : mapping input to specipic action
@@ -191,6 +293,7 @@ void AHRCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
 	// using customized func
+		// view
 	EnhancedInputComponent->BindAction(FirstPersonViewMoveAction, ETriggerEvent::Triggered, this, &AHRCharacterPlayer::FirstPersonViewMove);
 	EnhancedInputComponent->BindAction(FirstPersonViewLookAction, ETriggerEvent::Triggered, this, &AHRCharacterPlayer::FirstPersonViewLook);
 
@@ -199,7 +302,30 @@ void AHRCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 	EnhancedInputComponent->BindAction(QuarterViewMoveAction, ETriggerEvent::Triggered, this, &AHRCharacterPlayer::QuarterViewMove);
 
+		// interact
+	EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &AHRCharacterPlayer::Interact);
+	EnhancedInputComponent->BindAction(ToggleInventoryAction, ETriggerEvent::Triggered, this, &AHRCharacterPlayer::ToggleInventory);
+
+		// flashlight
+	//EnhancedInputComponent->BindAction(ToggleFlashlightAction, ETriggerEvent::Triggered, this, &AHRCharacterPlayer::ToggleFlashLight);
+
+	if (ToggleFlashlightAction) // ToggleFlashlightAction이 유효한지 확인
+	{
+		EnhancedInputComponent->BindAction(ToggleFlashlightAction, ETriggerEvent::Triggered, this, &AHRCharacterPlayer::ToggleFlashLight);
+		UE_LOG(LogTemp, Warning, TEXT("ToggleFlashlightAction BOUND successfully.")); // 바인딩 성공 로그 추가
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("ToggleFlashlightAction is NULLPTR. Cannot bind.")); // 바인딩 실패 로그 추가
+	}
 }
+
+//void AHRCharacterPlayer::Tick(float DeltaTime)
+//{
+//	Super::Tick(DeltaTime);
+//
+//
+//}
 
 //// debug
 //FString EnumToString(ECharacterControlType EnumValue)
@@ -395,7 +521,6 @@ void AHRCharacterPlayer::QuarterViewMove(const FInputActionValue& Value)
 
 	//	GetMesh()->SetWorldRotation(TargetRotation);
 	//}
-
 }
 
 //// 대안2, fpv의 회전이 그대로 보전되어 다음 사이클에도 나오는 버그
@@ -436,3 +561,158 @@ void AHRCharacterPlayer::QuarterViewMove(const FInputActionValue& Value)
 //		GetMesh()->SetWorldRotation(InterpolatedRotation);
 //	}
 //}
+
+void AHRCharacterPlayer::Interact()
+{
+	// linetrace
+	APlayerController* playerController = Cast<APlayerController>(GetController());
+	if (!playerController) return;
+
+	FVector start;
+	FVector end;
+	FHitResult hitResult;
+
+	FVector cameraLocation;
+	FRotator cameraRotation;
+	playerController->GetPlayerViewPoint(cameraLocation, cameraRotation);
+
+	start = cameraLocation;
+	end = start + (cameraRotation.Vector() * 1000.0f); // modifiable line range
+
+	// collision query decision struct
+	FCollisionQueryParams traceParams;
+	traceParams.AddIgnoredActor(this); // ignore itself (actor)
+
+	// shoot trace
+	bool bHit = GetWorld()->LineTraceSingleByChannel(
+		hitResult,
+		start,
+		end,
+		ECC_Visibility,		// collision channel
+		traceParams			// additional utility
+	);
+
+	// debug line
+	FColor lineColor = bHit ? FColor::Green : FColor::Red;
+	DrawDebugLine(GetWorld(), start, end, lineColor, false, 1.0f, 0, 0.5f);
+
+	if (bHit)
+	{
+		AActor* HitActor = hitResult.GetActor();
+		if (HitActor)
+		{
+			// Item
+			IHRItemInterface* Pickable = Cast<IHRItemInterface>(HitActor);
+			if (Pickable)
+			{
+				if (Pickable->IsPickable())
+				{
+					AddItemToInventory(HitActor);
+
+					Pickable->OnPickedUp(this);	// what should happen after picked up
+
+					// debug
+					UE_LOG(LogTemp, Warning, TEXT("Item picked up : %s"), *HitActor->GetName());
+				}
+			}
+			else // not an item
+			{
+				IHRInteractableActorInterface* Interactable = Cast<IHRInteractableActorInterface>(HitActor);
+				if (Interactable)
+				{
+					if (Interactable->IsInteractable())
+					{
+						// couldn't use like 'Interactable->interact();'
+						// cuz its BlueprintNativeEvent
+						IHRInteractableActorInterface::Execute_BP_Interact(HitActor, this);
+					}
+				}
+			}
+		}
+	}
+}
+
+void AHRCharacterPlayer::AddItemToInventory(AActor* InItem)
+{
+	AHRItemBase* Item = Cast<AHRItemBase>(InItem);
+	if (Item)
+	{
+		InventoryComponent->AddItem(Item);
+
+		// debug
+		UE_LOG(LogTemp, Warning, TEXT("Item added to inventory: %s"), *Item->GetName());
+
+		if (InventoryWidgetInstance)
+		{
+			// 블루프린트에 있는 UpdateInventoryUI 함수 호출
+			FOutputDeviceNull n;
+			InventoryWidgetInstance->CallFunctionByNameWithArguments
+			(TEXT("UpdateInventoryUI"), n, nullptr, true);
+		}
+	}
+}
+
+void AHRCharacterPlayer::ToggleInventory()
+{
+	if (InventoryWidgetInstance)
+	{
+		FOutputDeviceNull n;
+
+		InventoryWidgetInstance->CallFunctionByNameWithArguments(TEXT("ToggleInventory"), n, nullptr, true);
+	}
+}
+
+void AHRCharacterPlayer::AttachFlashlight(AHRItemBase* FlashlightToAttach)
+{
+	if (FlashlightToAttach && FlashlightHolder) // FlashlightHolder 사용
+	{
+		EquippedFlashlight = FlashlightToAttach;
+		EquippedFlashlight->AttachToComponent(
+			FlashlightHolder, // FlashlightHolder에 부착
+			FAttachmentTransformRules::SnapToTargetIncludingScale // 위치/회전을 Holder에 맞춤
+		);
+		EquippedFlashlight->SetOwner(this);
+
+		// Holder에 붙였으므로, 손전등 자체의 상대 위치/회전은 (0,0,0)으로 리셋 (선택 사항)
+		EquippedFlashlight->SetActorRelativeLocation(FVector::ZeroVector);
+		EquippedFlashlight->SetActorRelativeRotation(FRotator::ZeroRotator);
+
+		UE_LOG(LogTemp, Log, TEXT("Flashlight attached to FlashlightHolder: %s"), *EquippedFlashlight->GetName());
+
+		EquippedFlashlight->SetActorHiddenInGame(false);
+		// ... (메시 가시성 처리) ...
+	}
+}
+
+void AHRCharacterPlayer::ToggleFlashLight()
+{
+	UE_LOG(LogTemp, Error, TEXT("TOGGLE FLASHLIGHT FUNCTION ENTERED!"));
+
+	if (IsValid(EquippedFlashlight))
+	{
+		if (EquippedFlashlight->GetClass()->ImplementsInterface(UHRToggleItemInterface::StaticClass()))
+		{
+			IHRToggleItemInterface::Execute_BP_ToggleItem(EquippedFlashlight);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("ToggleFlashLight: EquippedFlashlight (%s) DOES NOT IMPLEMENT UHRToggleItemInterface."), *EquippedFlashlight->GetName());
+		}
+	}
+	else
+	{
+	UE_LOG(LogTemp, Error, TEXT("ToggleFlashLight: EquippedFlashlight is not VALID"));
+	}
+}
+
+void AHRCharacterPlayer::SetupCharacterWidget(UHRUserWidget* InUserWidget)
+{
+	UHRHpBarWidget* HpBarWidget = Cast<UHRHpBarWidget>(InUserWidget);
+	if (HpBarWidget)
+	{
+		HpBarWidget->SetMaxHp(Stat->GetMaxHp());
+		HpBarWidget->UpdateHpBar(Stat->GetCurrentHp());
+
+		Stat->OnHpChanged.AddUObject(HpBarWidget, &UHRHpBarWidget::UpdateHpBar);
+	}
+}
