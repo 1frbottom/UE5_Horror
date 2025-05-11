@@ -3,6 +3,13 @@
 
 #include "Player/HRPlayerController.h"
 
+AHRPlayerController::AHRPlayerController()
+{
+	// UI Manager
+	UIManager = CreateDefaultSubobject<UHRUIManagerComponent>(TEXT("UIManager"));
+
+}
+
 void AHRPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
