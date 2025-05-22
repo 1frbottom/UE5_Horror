@@ -78,5 +78,6 @@ UE5_HorrorGame/Content/Map/LevelDevelop/_GENERATED/*
 
 # Huge Assets
 UE5_HorrorGame/Content/Asset/NonGit/*
+UE5_HorrorGame/Content/AssetUsing/*
 !UE5_HorrorGame/Content/Asset/NonGit/.gitkeep
 !UE5_HorrorGame/Content/Asset/NonGit/list.txt
