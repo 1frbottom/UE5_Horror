@@ -33,7 +33,6 @@
 
 
 
-
 AHRCharacterPlayer::AHRCharacterPlayer()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -50,7 +49,10 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 
 	GetCharacterMovement()->JumpZVelocity = 500.0f;
 	GetCharacterMovement()->AirControl = 0.35f;
-	GetCharacterMovement()->MaxWalkSpeed = 500.0f;
+
+	WalkSpeed = 200.0f;
+	SprintSpeed = 400.0f;
+	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.0f;
 
 	// Capsule
@@ -67,7 +69,7 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 	{
 		GetMesh()->SetSkeletalMesh(CharacterMeshRef.Object);
 	}
-
+	 
 	static ConstructorHelpers::FClassFinder<UAnimInstance> AnimInstanceClassRef(TEXT("/Game/Asset/NonFab/DefaultMannequin/Mannequins/Animations/ABP_Manny.ABP_Manny_C"));
 	if (AnimInstanceClassRef.Class)
 	{
@@ -141,6 +143,19 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 	{
 		JumpAction = InputActionJumpRef.Object;
 	}
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionCrouchRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_Crouch.IA_Crouch'"));
+	if (nullptr != InputActionCrouchRef.Object)
+	{
+		CrouchAction = InputActionCrouchRef.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionSprintRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_Sprint.IA_Sprint'"));
+	if (nullptr != InputActionSprintRef.Object)
+	{
+		SprintAction = InputActionSprintRef.Object;
+	}
+
 
 		// view
 			// FPV
@@ -267,7 +282,6 @@ void AHRCharacterPlayer::BeginPlay()
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Inventory widget class doesn't fixed in editor!"));
 		}
-
 }
 
 void AHRCharacterPlayer::PostInitializeComponents()
@@ -291,6 +305,14 @@ void AHRCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
 	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+
+	EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &AHRCharacterPlayer::StartCrouch);
+	EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &AHRCharacterPlayer::StopCrouch);
+
+	EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AHRCharacterPlayer::StartSprint);
+	EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AHRCharacterPlayer::StopSprint);
+	EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Canceled, this, &AHRCharacterPlayer::StopSprint);
+
 
 	// using customized func
 		// view
@@ -427,6 +449,33 @@ void AHRCharacterPlayer::SetCharacterControlData(const UHRCharacterControlData* 
 
 	// Mesh
 	GetMesh()->SetOwnerNoSee(CharacterControlData->bSetOwnerNoSee);
+}
+
+void AHRCharacterPlayer::StartCrouch()
+{
+	Crouch();
+
+	UE_LOG(LogTemp, Warning, TEXT("Start Crouch\n"));
+}
+void AHRCharacterPlayer::StopCrouch()
+{
+	UnCrouch();
+
+	UE_LOG(LogTemp, Warning, TEXT("Stop Crouch\n"));
+}
+
+void AHRCharacterPlayer::StartSprint()
+{
+	GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+
+	UE_LOG(LogTemp, Warning, TEXT("StartSprint - MaxWalkSpeed actually set to: %f"), GetCharacterMovement()->MaxWalkSpeed);
+}
+void AHRCharacterPlayer::StopSprint()
+{
+	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+
+	UE_LOG(LogTemp, Warning, TEXT("StopSprint - MaxWalkSpeed actually set to: %f"), GetCharacterMovement()->MaxWalkSpeed);
+
 }
 
 // FInputActionValue : struct that containing various input info ( refreshing every frame )

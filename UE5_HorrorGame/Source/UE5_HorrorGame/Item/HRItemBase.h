@@ -7,6 +7,7 @@
 #include "Components/SphereComponent.h"
 #include "Interface/HRItemInterface.h"
 #include "Delegates/DelegateCombinations.h"
+#include "InteractableActor/HRInteractableActorBase.h"
 #include "HRItemBase.generated.h"
 
 class AHRCharacterPlayer;
@@ -23,7 +24,7 @@ enum class EItemType : uint8
 };
 
 UCLASS()
-class UE5_HORRORGAME_API AHRItemBase : public AActor, public IHRItemInterface
+class UE5_HORRORGAME_API AHRItemBase : public AHRInteractableActorBase, public IHRItemInterface
 {
 	GENERATED_BODY()
 	
@@ -55,8 +56,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UStaticMeshComponent* StaticMeshComponent;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	USphereComponent* CollisionComponent;
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	//USphereComponent* CollisionComponent;
 
 public:
 	UFUNCTION(BlueprintPure, Category = "Item Info")
@@ -94,4 +95,11 @@ public:
 		// for being seen in the BP
 	UFUNCTION(BlueprintImplementableEvent, Category = "HRItemInterface")
 	void BP_OnPickedUp(AHRCharacterPlayer* character);
+
+// AHRInteractableActorBase
+public:
+	virtual bool IsInteractable() const override;
+
+	virtual FText GetInteractionText_Implementation() override;
+
 };
