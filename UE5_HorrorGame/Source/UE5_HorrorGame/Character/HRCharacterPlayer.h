@@ -10,6 +10,9 @@
 #include "Interface/HRCharacterWidgetInterface.h"
 #include "HRCharacterPlayer.generated.h"
 
+#define ECC_Interactable ECollisionChannel::ECC_GameTraceChannel1
+
+class AHRInteractableActorBase;
 
 UENUM()
 enum class ECharacterControlType : uint8
@@ -196,7 +199,24 @@ protected:
 		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 		TSubclassOf<UUserWidget> InventorySlotWidgetClass;
 
-// Miscellaneous
+// HRInteractableActorBase
+public:
+	void RegisterInteractableActor(AHRInteractableActorBase* InteractableActor);
+	void UnregisterInteractableActor(AHRInteractableActorBase* InteractableActor);
+private:
+	void StartInteractionTrace();
+	void StopInteractionTrace();
+
+	UPROPERTY()
+	TObjectPtr<AHRInteractableActorBase> FocusedActor;
+	FTimerHandle TraceTimerHandle;
+
+	UPROPERTY()
+	TSet<AHRInteractableActorBase*> OverlappedInteractableActors;
+
+	void TraceInteractable();
+
+// HRItemBase
 
 	// key
 protected:
@@ -226,6 +246,5 @@ public:
 	// 현재 손전등이 장착되어 있는지 확인하는 함수 (BlueprintPure로 만들면 BP에서 사용하기 편함)
 	UFUNCTION(BlueprintPure, Category = "Flashlight")
 	bool HasFlashlightEquipped() const { return hasFlashLight; }
-
 
 };

@@ -6,7 +6,6 @@
 // Sets default values
 AHRItemBase::AHRItemBase()
 {
-	bIsPickable = true;
 	bIsInteractable = true;
 
 
@@ -16,7 +15,6 @@ AHRItemBase::AHRItemBase()
 
 void AHRItemBase::OnPickedUp(AHRCharacterPlayer* character)
 {
-	bIsPickable = false;
 	bIsInteractable = false;
 
 	OnFocusLost();
@@ -30,16 +28,8 @@ void AHRItemBase::OnPickedUp(AHRCharacterPlayer* character)
 	BP_OnPickedUp(character);
 }
 
-bool AHRItemBase::IsInteractable() const
-{
-
-	return bIsPickable;
-}
-
 FText AHRItemBase::GetInteractionText_Implementation()
 {
 
 	return InteractionText;
 }
-
-

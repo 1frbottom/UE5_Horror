@@ -48,9 +48,6 @@ protected:
 	FText ItemDescription;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Info")
-	bool bIsPickable;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Info")
 	int32 Quantity;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
@@ -81,15 +78,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Item Info")
 	void SetQuantity(int32 NewQuantity) { Quantity = NewQuantity; }
 
-	//UFUNCTION(BlueprintPure, Category = "Item Info")
-	//bool IsPickable() const { return bIsPickable; }
-
-	// temporary disable item, maybe useful
-	UFUNCTION(BlueprintCallable, Category = "Item Info")
-	void SetIsPickable(bool bNewPickable) { bIsPickable = bNewPickable; }
-
 	// HRItemInterface
-	virtual bool IsPickable() const override { return bIsPickable; }
+	virtual bool IsPickable() const override { return bIsInteractable; }
 	virtual void OnPickedUp(AHRCharacterPlayer* character) override;
 
 		// for being seen in the BP
@@ -98,8 +88,6 @@ public:
 
 // AHRInteractableActorBase
 public:
-	virtual bool IsInteractable() const override;
-
 	virtual FText GetInteractionText_Implementation() override;
 
 };

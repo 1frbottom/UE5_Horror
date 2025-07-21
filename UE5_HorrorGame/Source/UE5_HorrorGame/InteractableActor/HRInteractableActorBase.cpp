@@ -3,10 +3,13 @@
 
 #include "InteractableActor/HRInteractableActorBase.h"
 #include "Components/TextBlock.h"
+#include "Character/HRCharacterPlayer.h"
 
 // Sets default values
 AHRInteractableActorBase::AHRInteractableActorBase()
 {
+    bIsInteractable = true;
+
     USceneComponent* DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
     RootComponent = DefaultSceneRoot;
 
@@ -14,19 +17,27 @@ AHRInteractableActorBase::AHRInteractableActorBase()
     InteractionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionBox"));
     InteractionBox->SetupAttachment(RootComponent);
 
+        // temp
+    // 물리 시뮬레이션은 하지 않고, 오버랩과 트레이스 같은 쿼리 이벤트만
+    InteractionBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    // 오브젝트 타입
+    InteractionBox->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+    // 모든 채널 ignore
+    InteractionBox->SetCollisionResponseToAllChannels(ECR_Ignore);
+    // Pawn에 대해서만 overlap
+    InteractionBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+
     InteractionBox->OnComponentBeginOverlap.AddDynamic(this, &AHRInteractableActorBase::OnInteractionBoxBeginOverlap);
     InteractionBox->OnComponentEndOverlap.AddDynamic(this, &AHRInteractableActorBase::OnInteractionBoxEndOverlap);
 
-   
-        
-    //// anchor component
-    //InteractionWidgetAnchor = CreateDefaultSubobject<USceneComponent>(TEXT("InteractionWidgetAnchor"));
-    //InteractionWidgetAnchor->SetupAttachment(RootComponent);
-    //InteractionWidgetAnchor->SetRelativeLocation(FVector(0.0f, 0.0f, 0.0f));
+    // anchor component
+    InteractionWidgetAnchor = CreateDefaultSubobject<USceneComponent>(TEXT("InteractionWidgetAnchor"));
+    InteractionWidgetAnchor->SetupAttachment(RootComponent);
+    InteractionWidgetAnchor->SetRelativeLocation(FVector(0.0f, 0.0f, 0.0f));
 
     // widget component
     InteractionPromptWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("InteractionPromptWidget"));
-    InteractionPromptWidget->SetupAttachment(RootComponent);
+    InteractionPromptWidget->SetupAttachment(InteractionWidgetAnchor);
     InteractionPromptWidget->SetWidgetSpace(EWidgetSpace::Screen);
     InteractionPromptWidget->SetDrawAtDesiredSize(true);
     // InteractionPromptWidget->SetDrawSize(FVector2D(100.f, 30.f));        // 고정 크기 설정 시
@@ -51,37 +62,48 @@ AHRInteractableActorBase::AHRInteractableActorBase()
 
 void AHRInteractableActorBase::OnInteractionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-    APawn* PlayerPawn = Cast<APawn>(OtherActor);
-    if (PlayerPawn && PlayerPawn->IsLocallyControlled())    // 로컬 플레이어인지 확인 (멀티플레이어 고려)
+    if (AHRCharacterPlayer* Player = Cast<AHRCharacterPlayer>(OtherActor))
     {
-        OnFocusGained();
+        if (Player->IsLocallyControlled())
+        {
+            Player->RegisterInteractableActor(this);
+        }
     }
 }
 
 void AHRInteractableActorBase::OnInteractionBoxEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-    APawn* PlayerPawn = Cast<APawn>(OtherActor);
-    if (PlayerPawn && PlayerPawn->IsLocallyControlled())
+    if (AHRCharacterPlayer* Player = Cast<AHRCharacterPlayer>(OtherActor))
     {
-        OnFocusLost();
+        if (Player->IsLocallyControlled())
+        {
+            Player->UnregisterInteractableActor(this);
+        }
     }
 }
 
 void AHRInteractableActorBase::OnFocusGained()
 {
-    if (InteractionPromptWidget)
+    if (IsInteractable())
     {
-        UUserWidget* UserWidgetObject = InteractionPromptWidget->GetUserWidgetObject();
-        if (UserWidgetObject)
+        if (InteractionPromptWidget)
         {
-            // calling textblock from wbp_interaction
-            UTextBlock* PromptTextBlock = Cast<UTextBlock>(UserWidgetObject->GetWidgetFromName(TEXT("InteractionText_WBP")));
-            if (PromptTextBlock)
+            UUserWidget* UserWidgetObject = InteractionPromptWidget->GetUserWidgetObject();
+            if (UserWidgetObject)
             {
-                PromptTextBlock->SetText(GetInteractionText());
+                // calling textblock from wbp_interaction
+                UTextBlock* PromptTextBlock = Cast<UTextBlock>(UserWidgetObject->GetWidgetFromName(TEXT("InteractionText_WBP")));
+                if (PromptTextBlock)
+                {
+                    PromptTextBlock->SetText(GetInteractionText());
+                }
             }
+            InteractionPromptWidget->SetVisibility(true);
         }
-        InteractionPromptWidget->SetVisibility(true);
+    }
+    else
+    {
+        OnFocusLost();
     }
 }
 

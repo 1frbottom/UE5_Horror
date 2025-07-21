@@ -51,7 +51,7 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 	GetCharacterMovement()->AirControl = 0.35f;
 
 	WalkSpeed = 200.0f;
-	SprintSpeed = 400.0f;
+	SprintSpeed = 300.0f;
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.0f;
 
@@ -282,6 +282,16 @@ void AHRCharacterPlayer::BeginPlay()
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Inventory widget class doesn't fixed in editor!"));
 		}
+
+	// very first, start checking collision with AHRInteractableActorBase 
+
+	TArray<AActor*> InitialOverlappingActors;
+	GetOverlappingActors(InitialOverlappingActors, AHRInteractableActorBase::StaticClass());
+
+	if (InitialOverlappingActors.Num() > 0)
+	{
+		StartInteractionTrace();
+	}
 }
 
 void AHRCharacterPlayer::PostInitializeComponents()
@@ -611,71 +621,201 @@ void AHRCharacterPlayer::QuarterViewMove(const FInputActionValue& Value)
 //	}
 //}
 
-void AHRCharacterPlayer::Interact()
+void AHRCharacterPlayer::TraceInteractable()
 {
-	// linetrace
-	APlayerController* playerController = Cast<APlayerController>(GetController());
-	if (!playerController) return;
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	if (!PlayerController) return;
 
 	FVector start;
-	FVector end;
+	FRotator rotation;
+	PlayerController->GetPlayerViewPoint(start, rotation);
+
+	FVector end = start + (rotation.Vector() * 1000.0f);
 	FHitResult hitResult;
-
-	FVector cameraLocation;
-	FRotator cameraRotation;
-	playerController->GetPlayerViewPoint(cameraLocation, cameraRotation);
-
-	start = cameraLocation;
-	end = start + (cameraRotation.Vector() * 1000.0f); // modifiable line range
-
-	// collision query decision struct
 	FCollisionQueryParams traceParams;
-	traceParams.AddIgnoredActor(this); // ignore itself (actor)
+	traceParams.AddIgnoredActor(this);
 
-	// shoot trace
 	bool bHit = GetWorld()->LineTraceSingleByChannel(
 		hitResult,
 		start,
 		end,
-		ECC_Visibility,		// collision channel
-		traceParams			// additional utility
+		ECC_GameTraceChannel1, // ECC_Visibility,
+		traceParams
 	);
 
-	// debug line
-	FColor lineColor = bHit ? FColor::Green : FColor::Red;
-	DrawDebugLine(GetWorld(), start, end, lineColor, false, 1.0f, 0, 0.5f);
+	// debug ~
+	if (bHit)
+	{
+		// LineTrace에 맞은 액터와 컴포넌트의 이름을 로그로 출력
+		UE_LOG(LogTemp, Warning, TEXT("LineTrace HIT --- Actor: [%s], Component: [%s]"),
+			*hitResult.GetActor()->GetName(),
+			*hitResult.GetComponent()->GetName());
+	}
+	else
+	{
+		// 아무것도 맞지 않았을 때 로그 출력
+		UE_LOG(LogTemp, Warning, TEXT("LineTrace HIT --- NOTHING"));
+	}
+	// ~ debug
+
+	AHRInteractableActorBase* FoundInteractable = nullptr;
 
 	if (bHit)
 	{
-		AActor* HitActor = hitResult.GetActor();
-		if (HitActor)
+		AActor* hitActor = hitResult.GetActor();
+
+		// should be bigger than around 100
+		// cuz it calculates distance from each pivot
+		const float maxInteractionDistance = 250.0f;	
+
+		// check distance
+		if (hitActor && FVector::Dist(GetActorLocation(), hitActor->GetActorLocation()) < maxInteractionDistance)
 		{
-			// Item
-			IHRItemInterface* Pickable = Cast<IHRItemInterface>(HitActor);
-			if (Pickable)
+			FoundInteractable = Cast<AHRInteractableActorBase>(hitActor);
+
+			// debug
+			const float distance = FVector::Dist(GetActorLocation(), hitActor->GetActorLocation());
+			UE_LOG(LogTemp, Log, TEXT("1. Trace Hit: %s"), *hitActor->GetName());
+			UE_LOG(LogTemp, Log, TEXT("2. Distance to Target: %f"), distance);
+		}
+	}
+
+	if (FoundInteractable == nullptr)
+	{
+		// 이전에 포커스된 액터가 있었다면 포커스를 잃게 함
+		if (IsValid(FocusedActor))
+		{
+			FocusedActor->OnFocusLost();
+			FocusedActor = nullptr;
+		}
+	}
+	else
+	{
+		if (FoundInteractable != FocusedActor)
+		{
+			if (FocusedActor)
 			{
-				if (Pickable->IsPickable())
-				{
-					AddItemToInventory(HitActor);
-
-					Pickable->OnPickedUp(this);	// what should happen after picked up
-
-					// debug
-					UE_LOG(LogTemp, Warning, TEXT("Item picked up : %s"), *HitActor->GetName());
-				}
+				FocusedActor->OnFocusLost();
 			}
-			else // not an item
+
+			FoundInteractable->OnFocusGained();
+			FocusedActor = FoundInteractable;
+		}
+	}
+}
+
+void AHRCharacterPlayer::Interact()
+{
+	//// linetrace
+	//APlayerController* playerController = Cast<APlayerController>(GetController());
+	//if (!playerController) return;
+
+	//FVector start;
+	//FVector end;
+	//FHitResult hitResult;
+
+	//FVector cameraLocation;
+	//FRotator cameraRotation;
+	//playerController->GetPlayerViewPoint(cameraLocation, cameraRotation);
+
+	//start = cameraLocation;
+	//end = start + (cameraRotation.Vector() * 1000.0f); // modifiable line range
+
+	//// collision query decision struct
+	//FCollisionQueryParams traceParams;
+	//traceParams.AddIgnoredActor(this); // ignore itself (actor)
+
+	//// shoot trace
+	//bool bHit = GetWorld()->LineTraceSingleByChannel(
+	//	hitResult,
+	//	start,
+	//	end,
+	//	ECC_Visibility,		// collision channel
+	//	traceParams			// additional utility
+	//);
+
+	//// debug line
+	//FColor lineColor = bHit ? FColor::Green : FColor::Red;
+	//DrawDebugLine(GetWorld(), start, end, lineColor, false, 1.0f, 0, 0.5f);
+
+	//if (bHit)
+	//{
+	//	AActor* HitActor = hitResult.GetActor();
+	//	if (HitActor)
+	//	{
+	//		// Item
+	//		IHRItemInterface* Pickable = Cast<IHRItemInterface>(HitActor);
+	//		if (Pickable)
+	//		{
+	//			if (Pickable->IsPickable())
+	//			{
+	//				AddItemToInventory(HitActor);
+
+	//				Pickable->OnPickedUp(this);	// what should happen after picked up
+
+	//				// debug
+	//				UE_LOG(LogTemp, Warning, TEXT("Item picked up : %s"), *HitActor->GetName());
+	//			}
+	//		}
+	//		else // not an item
+	//		{
+	//			IHRInteractableActorInterface* Interactable = Cast<IHRInteractableActorInterface>(HitActor);
+	//			if (Interactable)
+	//			{
+	//				if (Interactable->IsInteractable())
+	//				{
+	//					// couldn't use like 'Interactable->interact();'
+	//					// cuz its BlueprintNativeEvent
+	//					IHRInteractableActorInterface::Execute_BP_Interact(HitActor, this);
+	//				}
+	//			}
+	//		}
+	//	}
+	//}
+
+	// only for debug
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	if (PlayerController)
+	{
+		FVector start;
+		FRotator rotation;
+		PlayerController->GetPlayerViewPoint(start, rotation);
+
+		FVector end = start + (rotation.Vector() * 1000.0f);
+		FHitResult hitResult;
+		FCollisionQueryParams traceParams;
+		traceParams.AddIgnoredActor(this);
+
+		bool bHit = GetWorld()->LineTraceSingleByChannel(
+			hitResult,
+			start,
+			end,
+			ECC_Visibility,
+			traceParams
+		);
+
+		FColor lineColor = bHit ? FColor::Green : FColor::Red;
+		DrawDebugLine(GetWorld(), start, end, lineColor, false, 2.0f, 0, 1.0f);
+	}
+
+	// Trace 로직이 모두 사라지고, 이 조건문만 남음
+	if (FocusedActor) // 타이머가 찾아놓은 액터를 바로 사용
+	{
+		// Item인지 확인
+		if (IHRItemInterface* Pickable = Cast<IHRItemInterface>(FocusedActor))
+		{
+			if (Pickable->IsPickable())
 			{
-				IHRInteractableActorInterface* Interactable = Cast<IHRInteractableActorInterface>(HitActor);
-				if (Interactable)
-				{
-					if (Interactable->IsInteractable())
-					{
-						// couldn't use like 'Interactable->interact();'
-						// cuz its BlueprintNativeEvent
-						IHRInteractableActorInterface::Execute_BP_Interact(HitActor, this);
-					}
-				}
+				AddItemToInventory(FocusedActor);
+				Pickable->OnPickedUp(this);
+			}
+		}
+		// Item이 아니면 일반 Interactable인지 확인
+		else if (IHRInteractableActorInterface* Interactable = Cast<IHRInteractableActorInterface>(FocusedActor))
+		{
+			if (Interactable->IsInteractable())
+			{
+				IHRInteractableActorInterface::Execute_BP_Interact(FocusedActor, this);
 			}
 		}
 	}
@@ -708,6 +848,47 @@ void AHRCharacterPlayer::ToggleInventory()
 		FOutputDeviceNull n;
 
 		InventoryWidgetInstance->CallFunctionByNameWithArguments(TEXT("ToggleInventory"), n, nullptr, true);
+	}
+}
+
+void AHRCharacterPlayer::RegisterInteractableActor(AHRInteractableActorBase* InteractableActor)
+{
+	OverlappedInteractableActors.Add(InteractableActor);
+
+	if (OverlappedInteractableActors.Num() == 1)
+	{
+		StartInteractionTrace();
+	}
+}
+
+void AHRCharacterPlayer::UnregisterInteractableActor(AHRInteractableActorBase* InteractableActor)
+{
+	OverlappedInteractableActors.Remove(InteractableActor);
+
+	if (OverlappedInteractableActors.Num() == 0)
+	{
+		StopInteractionTrace();
+	}
+}
+
+void AHRCharacterPlayer::StartInteractionTrace()
+{
+	GetWorld()->GetTimerManager().SetTimer(
+		TraceTimerHandle,
+		this,
+		&AHRCharacterPlayer::TraceInteractable,
+		0.01f,
+		true);
+}
+
+void AHRCharacterPlayer::StopInteractionTrace()
+{
+	GetWorld()->GetTimerManager().ClearTimer(TraceTimerHandle);
+
+	if (FocusedActor)
+	{
+		FocusedActor->OnFocusLost();
+		FocusedActor = nullptr;
 	}
 }
 

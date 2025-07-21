@@ -31,17 +31,17 @@ public:
 // interaction prompt
 protected:
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction UI")
 	UWidgetComponent* InteractionPromptWidget;		// 액터의 컴포넌트로 들어가는거라 액터와 동시생성
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction UI", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USceneComponent> InteractionWidgetAnchor;	// 모듈화 : 위젯컴포넌트 담을 앵커
 
 	// do hardcoding within each BP
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction UI")
 	FText InteractionText;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction UI")
 	UBoxComponent* InteractionBox;
 
 	UFUNCTION()
