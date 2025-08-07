@@ -16,16 +16,7 @@ AHRInteractableActorBase::AHRInteractableActorBase()
     // box collision component
     InteractionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionBox"));
     InteractionBox->SetupAttachment(RootComponent);
-
-        // temp
-    // 물리 시뮬레이션은 하지 않고, 오버랩과 트레이스 같은 쿼리 이벤트만
-    InteractionBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-    // 오브젝트 타입
-    InteractionBox->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
-    // 모든 채널 ignore
-    InteractionBox->SetCollisionResponseToAllChannels(ECR_Ignore);
-    // Pawn에 대해서만 overlap
-    InteractionBox->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+    InteractionBox->SetCollisionProfileName(TEXT("InteractableActorBase"));
 
     InteractionBox->OnComponentBeginOverlap.AddDynamic(this, &AHRInteractableActorBase::OnInteractionBoxBeginOverlap);
     InteractionBox->OnComponentEndOverlap.AddDynamic(this, &AHRInteractableActorBase::OnInteractionBoxEndOverlap);

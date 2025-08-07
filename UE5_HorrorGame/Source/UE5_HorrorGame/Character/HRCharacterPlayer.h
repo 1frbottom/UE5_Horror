@@ -11,7 +11,7 @@
 
 #include "HRCharacterPlayer.generated.h"
 
-#define ECC_Interactable ECollisionChannel::ECC_GameTraceChannel1
+#define ECC_Interactable ECollisionChannel::ECC_GameTraceChannel1	// Interaction
 
 class USpringArmComponent;
 class UCameraComponent;
