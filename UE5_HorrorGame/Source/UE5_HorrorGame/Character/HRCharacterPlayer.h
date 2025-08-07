@@ -8,11 +8,21 @@
 #include "Blueprint/UserWidget.h"
 #include "Miscellaneous/InventoryComponent.h"
 #include "Interface/HRCharacterWidgetInterface.h"
+
 #include "HRCharacterPlayer.generated.h"
 
 #define ECC_Interactable ECollisionChannel::ECC_GameTraceChannel1
 
+class USpringArmComponent;
+class UCameraComponent;
+class USceneComponent;
+class UInputAction;
+class UHRCharacterControlData;
+class UHRCharacterStatComponent;
+class UHRWidgetComponent;
+class AHRItemBase;
 class AHRInteractableActorBase;
+class UTimelineComponent;
 
 UENUM()
 enum class ECharacterControlType : uint8
@@ -32,8 +42,18 @@ enum class EKeyType : uint8
 	E
 };
 
+UENUM(BlueprintType)
+enum class EMapType : uint8
+{
+	EMT_None UMETA(DisplayName = "No Map"),       // 지도 없음
+	EMT_Floor1 UMETA(DisplayName = "1st Floor"),  // 1층
+	EMT_Floor2 UMETA(DisplayName = "2nd Floor"),  // 2층
+
+	EMT_MAX UMETA(Hidden) // Enum 개수 확인용 (항상 마지막에 위치)
+};
+
 UCLASS()
-class UE5_HORRORGAME_API AHRCharacterPlayer : public ACharacter, public IHRCharacterWidgetInterface
+class UE5_HORRORGAME_API AHRCharacterPlayer : public ACharacter/*, public IHRCharacterWidgetInterface*/
 {
 	GENERATED_BODY()
 
@@ -82,6 +102,14 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UCameraComponent> Camera_Quarter;
 
+// UI Actor Component
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<class UHRUIManagerComponent> UIManager;
+public:
+	UFUNCTION(BlueprintPure, Category = "UI")
+	UHRUIManagerComponent* GetUIManager() { return UIManager; }
+
 // Input
 // in this project, pawn controll the input system. Not the pc
 // using enhanced input ( add module to build.cs )
@@ -89,21 +117,6 @@ protected:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputAction> ChangeControlAction;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UInputAction> JumpAction;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UInputAction> CrouchAction;
-	void StartCrouch();
-	void StopCrouch();
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UInputAction> SprintAction;
-	void StartSprint();
-	void StopSprint();
-	float WalkSpeed;
-	float SprintSpeed;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputAction> FirstPersonViewMoveAction;
@@ -136,7 +149,35 @@ protected:
 	void ChangeCharacterControl();
 	void SetCharacterControl(ECharacterControlType NewCharacterControlType);
 
-	// interact
+	// move
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UInputAction> JumpAction;
+	virtual void Jump() override;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UInputAction> CrouchAction;
+	void StartCrouch();
+	void StopCrouch();
+
+	UFUNCTION()
+	void UpdateCrouch(float Value);
+	UFUNCTION()
+	void OnCrouchTimelineFinished();
+
+	UPROPERTY()
+	TObjectPtr<UTimelineComponent> CrouchTimeline;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UCurveFloat> CrouchCurve;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UInputAction> SprintAction;
+	void StartSprint();
+	void StopSprint();
+	float WalkSpeed;
+	float SprintSpeed;
+
+	// Interact
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputAction> InteractAction;
 	void Interact();
@@ -146,11 +187,19 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "UI") // 블루프린트에서 구현할 함수, BlueprintCallable로 변경
 		void ToggleInventory();
 
-	// flashlight
+	// ToggleFlashlight
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputAction> ToggleFlashlightAction;
 	void ToggleFlashLight();
 
+	// ToggleMap
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UInputAction> ToggleMapAction;
+	void ToggleMap();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UInputAction> CycleMapAction;
+	void CycleMap();
 
 // Stat
 protected:
@@ -170,12 +219,12 @@ protected:
 //
 //	void SetHp(float NewHp) { CurrentHp = FMath::Clamp<float>(NewHp, 0.0f, MaxHp); };
 
-// UI Widget
-protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widget", Meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UHRWidgetComponent> HpBar;
+// UI widget
+//protected:
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widget", Meta = (AllowPrivateAccess = "true"))
+	//TObjectPtr<class UHRWidgetComponent> HpBar;
 
-	virtual void SetupCharacterWidget(class UHRUserWidget* InUserWidget) override;
+	//virtual void SetupCharacterWidget(class UHRUserWidget* InUserWidget) override;
 
 // Inventory
 protected:
@@ -183,8 +232,9 @@ protected:
 		UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		UInventoryComponent* InventoryComponent;
 
-		void AddItemToInventory(AActor* Item);
 public:
+	void AddItemToInventory(AActor* Item);
+
 	UFUNCTION(BlueprintCallable, Category = "Components")
 	class UInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 
@@ -246,5 +296,29 @@ public:
 	// 현재 손전등이 장착되어 있는지 확인하는 함수 (BlueprintPure로 만들면 BP에서 사용하기 편함)
 	UFUNCTION(BlueprintPure, Category = "Flashlight")
 	bool HasFlashlightEquipped() const { return hasFlashLight; }
+
+	// map
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<UUserWidget> MapWidgetClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+	class UUserWidget* MapWidgetInstance;
+public:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Map")
+	EMapType CurrentMapType;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Map")
+	TSet<EMapType> OwnedMaps;
+
+	UFUNCTION(BlueprintCallable, Category = "Map")
+	void AcquireMap(EMapType NewMapType);
+
+
+// Miscellaneous
+	
+
+
+
+
 
 };

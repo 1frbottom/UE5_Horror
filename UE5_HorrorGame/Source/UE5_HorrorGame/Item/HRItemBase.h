@@ -39,7 +39,8 @@ protected:
 	EItemType ItemType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Info")
-	FText ItemName;
+	FText ItemName;		// when the actor is placed
+						// couldn't make auto wrap with no space, so use space to newline
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Info")
 	UTexture2D* ItemImage;
@@ -79,9 +80,10 @@ public:
 	void SetQuantity(int32 NewQuantity) { Quantity = NewQuantity; }
 
 	// HRItemInterface
-	virtual bool IsPickable() const override { return bIsInteractable; }
+	UFUNCTION(BlueprintCallable, Category = "HRItemInterface")
 	virtual void OnPickedUp(AHRCharacterPlayer* character) override;
-
+	virtual bool IsPickable() const override { return bIsInteractable; }
+	
 		// for being seen in the BP
 	UFUNCTION(BlueprintImplementableEvent, Category = "HRItemInterface")
 	void BP_OnPickedUp(AHRCharacterPlayer* character);

@@ -56,6 +56,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	virtual void OnFocusLost();
 
+	// on OnFocusGained, this func called (include Implementation() ovridden in bp) for custom ui text
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interaction")
 	FText GetInteractionText();
 	virtual FText GetInteractionText_Implementation();
