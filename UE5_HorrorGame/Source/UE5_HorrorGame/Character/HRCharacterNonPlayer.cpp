@@ -22,7 +22,7 @@ AHRCharacterNonPlayer::AHRCharacterNonPlayer()
 
 	// Capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.0f, 96.0f);
-	GetCapsuleComponent()->SetCollisionProfileName(TEXT("GhostCapsule"));
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("NpcPawn"));
 
 	//// Movement
 	//GetCharacterMovement()->bOrientRotationToMovement = true;
