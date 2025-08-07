@@ -56,6 +56,18 @@ void UBTService_Detect::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeM
 		CollisionQueryParam
 	);
 
+	// 채널 대신 오브젝트로 찾기, 채널 문제있을때 사용
+	//TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+	//ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn));
+	//bool bResult = World->OverlapMultiByObjectType(
+	//	OverlapResults,
+	//	Center,
+	//	FQuat::Identity,
+	//	ObjectTypes, // 채널 대신 오브젝트 타입 배열을 전달
+	//	FCollisionShape::MakeSphere(DetectRadius),
+	//	CollisionQueryParam
+	//);
+
 	if (bResult)
 	{
 		for (auto const& OverlapResult : OverlapResults)
@@ -72,6 +84,10 @@ void UBTService_Detect::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeM
 				return;
 			}
 		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("bResult not Valid"));
 	}
 
 	OwnerComp.GetBlackboardComponent()->SetValueAsObject(BBKEY_TARGET, nullptr);

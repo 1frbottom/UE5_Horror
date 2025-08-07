@@ -35,6 +35,7 @@
 
 #include "Player/HRUIManagerComponent.h"
 
+
 AHRCharacterPlayer::AHRCharacterPlayer()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -64,7 +65,7 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 
 	// Capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.0f, 96.0f);
-	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Pawn_1"));
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("PlayerPawn"));
 
 	// Mesh ( test )
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -100.0f), FRotator(0.0f, -90.0f, 0.0f));
@@ -401,7 +402,6 @@ void AHRCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 //void AHRCharacterPlayer::Tick(float DeltaTime)
 //{
 //	Super::Tick(DeltaTime);
-//
 //
 //}
 
@@ -740,7 +740,7 @@ void AHRCharacterPlayer::TraceInteractable()
 		hitResult,
 		start,
 		end,
-		ECC_GameTraceChannel1, // ECC_Visibility,
+		ECC_GameTraceChannel1,
 		traceParams
 	);
 
