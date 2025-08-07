@@ -13,10 +13,20 @@ AHRInteractableActorBase::AHRInteractableActorBase()
     USceneComponent* DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
     RootComponent = DefaultSceneRoot;
 
+    // Static Mesh
+    Mesh1 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh1"));
+    Mesh1->SetupAttachment(RootComponent);
+    Mesh1->SetCollisionProfileName(TEXT("InteractableActorBase_Mesh"));
+
+    Mesh2 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh2"));
+    Mesh2->SetupAttachment(RootComponent);
+    Mesh2->SetCollisionProfileName(TEXT("InteractableActorBase_Mesh"));
+    Mesh2->SetRelativeLocation(FVector(0.f, 100.f, 0.f));
+
     // box collision component
     InteractionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionBox"));
     InteractionBox->SetupAttachment(RootComponent);
-    InteractionBox->SetCollisionProfileName(TEXT("InteractableActorBase"));
+    InteractionBox->SetCollisionProfileName(TEXT("InteractableActorBase_Box"));
 
     InteractionBox->OnComponentBeginOverlap.AddDynamic(this, &AHRInteractableActorBase::OnInteractionBoxBeginOverlap);
     InteractionBox->OnComponentEndOverlap.AddDynamic(this, &AHRInteractableActorBase::OnInteractionBoxEndOverlap);
