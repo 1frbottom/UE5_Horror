@@ -30,9 +30,9 @@ public:
 
 // interaction prompt
 protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Visuals")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh")
 	TObjectPtr<UStaticMeshComponent> Mesh1;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Visuals")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh")
 	TObjectPtr<UStaticMeshComponent> Mesh2;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction UI")
