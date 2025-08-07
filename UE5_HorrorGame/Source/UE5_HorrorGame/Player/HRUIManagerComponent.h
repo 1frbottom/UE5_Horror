@@ -18,10 +18,10 @@ public:
 
 public:
 	UFUNCTION(BlueprintCallable)
-	void SetInputModeUI(UUserWidget* Widget);
+	void SetInputModeUICustom(UUserWidget* Widget, bool bShowCursor);
 
 	UFUNCTION(BlueprintCallable)
-	void SetInputModeGame();
+	void SetInputModeGameCustom();
 
 	//// for overloading
 	//UFUNCTION(BlueprintCallable)
@@ -29,5 +29,11 @@ public:
 
 	//UFUNCTION(BlueprintCallable)
 	//void CloseAllUI();
-		
+
+	UFUNCTION(BlueprintPure, Category = "UI")
+	bool IsUIActive() const { return bIsUIActive; }
+
+private:
+	bool bIsUIActive = false;
+
 };

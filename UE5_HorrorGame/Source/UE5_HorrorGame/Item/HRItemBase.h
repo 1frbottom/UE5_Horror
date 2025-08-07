@@ -7,6 +7,7 @@
 #include "Components/SphereComponent.h"
 #include "Interface/HRItemInterface.h"
 #include "Delegates/DelegateCombinations.h"
+#include "InteractableActor/HRInteractableActorBase.h"
 #include "HRItemBase.generated.h"
 
 class AHRCharacterPlayer;
@@ -23,7 +24,7 @@ enum class EItemType : uint8
 };
 
 UCLASS()
-class UE5_HORRORGAME_API AHRItemBase : public AActor, public IHRItemInterface
+class UE5_HORRORGAME_API AHRItemBase : public AHRInteractableActorBase, public IHRItemInterface
 {
 	GENERATED_BODY()
 	
@@ -38,7 +39,8 @@ protected:
 	EItemType ItemType;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Info")
-	FText ItemName;
+	FText ItemName;		// when the actor is placed
+						// couldn't make auto wrap with no space, so use space to newline
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Info")
 	UTexture2D* ItemImage;
@@ -47,16 +49,13 @@ protected:
 	FText ItemDescription;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Info")
-	bool bIsPickable;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Info")
 	int32 Quantity;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UStaticMeshComponent* StaticMeshComponent;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	USphereComponent* CollisionComponent;
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	//USphereComponent* CollisionComponent;
 
 public:
 	UFUNCTION(BlueprintPure, Category = "Item Info")
@@ -80,18 +79,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Item Info")
 	void SetQuantity(int32 NewQuantity) { Quantity = NewQuantity; }
 
-	//UFUNCTION(BlueprintPure, Category = "Item Info")
-	//bool IsPickable() const { return bIsPickable; }
-
-	// temporary disable item, maybe useful
-	UFUNCTION(BlueprintCallable, Category = "Item Info")
-	void SetIsPickable(bool bNewPickable) { bIsPickable = bNewPickable; }
-
 	// HRItemInterface
-	virtual bool IsPickable() const override { return bIsPickable; }
+	UFUNCTION(BlueprintCallable, Category = "HRItemInterface")
 	virtual void OnPickedUp(AHRCharacterPlayer* character) override;
-
+	virtual bool IsPickable() const override { return bIsInteractable; }
+	
 		// for being seen in the BP
 	UFUNCTION(BlueprintImplementableEvent, Category = "HRItemInterface")
 	void BP_OnPickedUp(AHRCharacterPlayer* character);
+
+// AHRInteractableActorBase
+public:
+	virtual FText GetInteractionText_Implementation() override;
+
 };

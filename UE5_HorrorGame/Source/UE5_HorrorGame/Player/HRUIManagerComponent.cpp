@@ -4,6 +4,9 @@
 #include "Player/HRUIManagerComponent.h"
 #include "Blueprint/UserWidget.h"
 
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
+
 // Sets default values for this component's properties
 UHRUIManagerComponent::UHRUIManagerComponent()
 {
@@ -14,29 +17,36 @@ UHRUIManagerComponent::UHRUIManagerComponent()
 	// ...
 }
 
-void UHRUIManagerComponent::SetInputModeUI(UUserWidget* Widget)
+void UHRUIManagerComponent::SetInputModeUICustom(UUserWidget* Widget, bool bShowCursor)
 {
-    if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+    if (APlayerController* pController = GetWorld()->GetFirstPlayerController())
     {
-        FInputModeUIOnly InputMode;
-        InputMode.SetWidgetToFocus(Widget->TakeWidget());
-        InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::LockAlways);
+        pController->StopMovement();
 
-        PC->SetInputMode(InputMode);
-        PC->bShowMouseCursor = true;
+        // allow 'game input + ui input'
+        FInputModeGameAndUI InputMode;
+        InputMode.SetWidgetToFocus(Widget->TakeWidget());
+        InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+
+        pController->SetInputMode(InputMode);
+        pController->bShowMouseCursor = bShowCursor;
 
         int32 ViewportX, ViewportY;
-        PC->GetViewportSize(ViewportX, ViewportY);
-        PC->SetMouseLocation(ViewportX / 2, ViewportY / 2);
+        pController->GetViewportSize(ViewportX, ViewportY);
+        pController->SetMouseLocation(ViewportX / 2.0f, ViewportY / 2.0f);
+
+        bIsUIActive = true;
     }
 }
 
-void UHRUIManagerComponent::SetInputModeGame()
+void UHRUIManagerComponent::SetInputModeGameCustom()
 {
-    if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+    if (APlayerController* pController = GetWorld()->GetFirstPlayerController())
     {
-        PC->SetInputMode(FInputModeGameOnly());
-        PC->bShowMouseCursor = false;
+        pController->SetInputMode(FInputModeGameOnly());
+        pController->bShowMouseCursor = false;
+
+        bIsUIActive = false;
     }
 }
 
