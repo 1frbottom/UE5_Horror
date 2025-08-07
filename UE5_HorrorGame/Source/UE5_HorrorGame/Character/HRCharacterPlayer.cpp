@@ -18,12 +18,14 @@
 
 #include "Interface/HRToggleItemInterface.h"
 
-#include "Components/GridPanel.h"
-#include "Components/CanvasPanel.h"
-#include "Components/Image.h"
-#include "Components/TextBlock.h"
+//#include "Components/GridPanel.h"
+//#include "Components/CanvasPanel.h"
+//#include "Components/Image.h"
+//#include "Components/TextBlock.h"
+//#include "UMG.h"	// ugridslot
 
-#include "UMG.h"	// ugridslot
+#include "Components/TimelineComponent.h"	// FOnTimelineFloat
+#include "Misc/OutputDeviceNull.h"	// FOutputDeviceNull
 
 #include "HRCharacterControlData.h"
 
@@ -31,8 +33,7 @@
 #include "UI/HRWidgetComponent.h"
 #include "UI/HRHpBarWidget.h"
 
-
-
+#include "Player/HRUIManagerComponent.h"
 
 AHRCharacterPlayer::AHRCharacterPlayer()
 {
@@ -50,7 +51,15 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 
 	GetCharacterMovement()->JumpZVelocity = 500.0f;
 	GetCharacterMovement()->AirControl = 0.35f;
-	GetCharacterMovement()->MaxWalkSpeed = 125.0f;
+
+	GetMovementComponent()->GetNavAgentPropertiesRef().bCanCrouch = true;
+	GetCharacterMovement()->CrouchedHalfHeight = 50.0f;
+	GetCharacterMovement()->MaxWalkSpeedCrouched = 100.0f;
+
+
+	WalkSpeed = 200.0f;
+	SprintSpeed = 300.0f;
+	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.0f;
 
 	// Capsule
@@ -62,20 +71,19 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 	GetMesh()->SetCollisionProfileName(TEXT("CharacterMesh"));
 
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> CharacterMeshRef(TEXT("/Script/Engine.SkeletalMesh'/Game/Asset/NonFab/DefaultMannequin/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple'"));
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> CharacterMeshRef(TEXT("/Script/Engine.SkeletalMesh'/Game/AssetUsing/JW/NonGit/NonFab/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple'"));
 	if (CharacterMeshRef.Object)
 	{
 		GetMesh()->SetSkeletalMesh(CharacterMeshRef.Object);
 	}
-
-	static ConstructorHelpers::FClassFinder<UAnimInstance> AnimInstanceClassRef(TEXT("/Game/Asset/NonFab/DefaultMannequin/Mannequins/Animations/ABP_Manny.ABP_Manny_C"));
+	 
+	static ConstructorHelpers::FClassFinder<UAnimInstance> AnimInstanceClassRef(TEXT("/Game/AssetUsing/JW/NonGit/NonFab/Mannequins/Animations/ABP_Manny.ABP_Manny_C"));
 	if (AnimInstanceClassRef.Class)
 	{
 		GetMesh()->SetAnimInstanceClass(AnimInstanceClassRef.Class);
 	}
 
 	// Camera
-
 	CurrCharacterControlType = ECharacterControlType::First;
 
 		// fpv
@@ -129,6 +137,9 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 	SpringArm_Quarter->bDoCollisionTest = false;
 	Camera_Quarter->bUsePawnControlRotation = false;
 
+	// UI Actor Component
+	UIManager = CreateDefaultSubobject<UHRUIManagerComponent>(TEXT("UIManager"));
+
 	// Input
 	static ConstructorHelpers::FObjectFinder<UInputAction> InputChangeActionControlRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_ChangeControl.IA_ChangeControl'"));
 	if (nullptr != InputChangeActionControlRef.Object)
@@ -140,6 +151,18 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 	if (nullptr != InputActionJumpRef.Object)
 	{
 		JumpAction = InputActionJumpRef.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionCrouchRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_Crouch.IA_Crouch'"));
+	if (nullptr != InputActionCrouchRef.Object)
+	{
+		CrouchAction = InputActionCrouchRef.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionSprintRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_Sprint.IA_Sprint'"));
+	if (nullptr != InputActionSprintRef.Object)
+	{
+		SprintAction = InputActionSprintRef.Object;
 	}
 
 		// view
@@ -202,38 +225,54 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 		ToggleInventoryAction = InputActionToggleInventoryRef.Object;
 	}
 		
-		// flashlight
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionFlashLightRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_FlashLight.IA_FlashLight'"));
-	if (nullptr != InputActionFlashLightRef.Object)
+		// ToggleFlashlight
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionToggleFlashLightRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_ToggleFlashLight.IA_ToggleFlashLight'"));
+	if (nullptr != InputActionToggleFlashLightRef.Object)
 	{
-		ToggleFlashlightAction = InputActionFlashLightRef.Object;
+		ToggleFlashlightAction = InputActionToggleFlashLightRef.Object;
+	}
+		
+		// ToggleMap
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionToggleMapRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_ToggleMap.IA_ToggleMap'"));
+	if (nullptr != InputActionToggleMapRef.Object)
+	{
+		ToggleMapAction = InputActionToggleMapRef.Object;
+	}
+
+		// CycleMap
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionCycleMapRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_CycleMap.IA_CycleMap'"));
+	if (nullptr != InputActionCycleMapRef.Object)
+	{
+		CycleMapAction = InputActionCycleMapRef.Object;
 	}
 
 	// Stat Component
 	Stat = CreateDefaultSubobject<UHRCharacterStatComponent>(TEXT("Stat"));
 
 	// Widget Component
-	HpBar = CreateDefaultSubobject<UHRWidgetComponent>(TEXT("Widget"));
-	HpBar->SetupAttachment(GetMesh());
-	HpBar->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
+	//HpBar = CreateDefaultSubobject<UHRWidgetComponent>(TEXT("Widget"));
+	//HpBar->SetupAttachment(GetMesh());
+	//HpBar->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
 
-	static ConstructorHelpers::FClassFinder<UUserWidget> HpBarWidgetRef(TEXT("/Game/UI/WBP_HpBar.WBP_HpBar_C"));
-	if (HpBarWidgetRef.Class)
-	{
-		HpBar->SetWidgetClass(HpBarWidgetRef.Class);
-		HpBar->SetWidgetSpace(EWidgetSpace::Screen);
-		HpBar->SetDrawSize(FVector2D(150.0f, 15.0f));
-		HpBar->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	//static ConstructorHelpers::FClassFinder<UUserWidget> HpBarWidgetRef(TEXT("/Game/UI/WBP_HpBar.WBP_HpBar_C"));
+	//if (HpBarWidgetRef.Class)
+	//{
+	//	HpBar->SetWidgetClass(HpBarWidgetRef.Class);
+	//	HpBar->SetWidgetSpace(EWidgetSpace::Screen);
+	//	HpBar->SetDrawSize(FVector2D(150.0f, 15.0f));
+	//	HpBar->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	}
+	//}
 
 	// Inventory Component
-		InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
+	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 
 	// Flashlight
-		FlashlightAttachSocketName = FName("Hand_Left_Socket_for_FlashLight");	// socket name
-		hasFlashLight = false;
+	FlashlightAttachSocketName = FName("Hand_Left_Socket_for_FlashLight");	// socket name
+	hasFlashLight = false;
 
+	// Map
+	CurrentMapType = EMapType::EMT_None;
 }
 
 void AHRCharacterPlayer::BeginPlay()
@@ -256,7 +295,7 @@ void AHRCharacterPlayer::BeginPlay()
 
 			if (InventoryWidgetInstance)
 			{
-				// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ß°ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
+				// »ý¼ºµÈ À§Á¬¿¡ ´ëÇÑ Ãß°¡ ¼³Á¤ (¼±ÅÃ »çÇ×)
 			}
 			else
 			{
@@ -268,13 +307,38 @@ void AHRCharacterPlayer::BeginPlay()
 			UE_LOG(LogTemp, Warning, TEXT("Inventory widget class doesn't fixed in editor!"));
 		}
 
+	// very first, start checking collision with AHRInteractableActorBase 
+
+		TArray<AActor*> InitialOverlappingActors;
+		GetOverlappingActors(InitialOverlappingActors, AHRInteractableActorBase::StaticClass());
+
+		if (InitialOverlappingActors.Num() > 0)
+		{
+			StartInteractionTrace();
+		}
+
+	// crouch timeline
+		CrouchTimeline = NewObject<UTimelineComponent>(this, FName("CrouchTimeline"));
+		CrouchTimeline->RegisterComponent();
+
+		FOnTimelineFloat UpdateFunction;
+		UpdateFunction.BindUFunction(this, FName("UpdateCrouch"));
+		if (CrouchCurve)
+		{
+			CrouchTimeline->AddInterpFloat(CrouchCurve, UpdateFunction);
+		}
+
+		FOnTimelineEvent OnTimelineFinished;
+		OnTimelineFinished.BindUFunction(this, FName("OnCrouchTimelineFinished"));
+		CrouchTimeline->SetTimelineFinishedFunc(OnTimelineFinished);
+		CrouchTimeline->SetTimelineLengthMode(ETimelineLengthMode::TL_LastKeyFrame);
 }
 
 void AHRCharacterPlayer::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	// hpï¿½ï¿½ 0ï¿½Ç¸ï¿½ ï¿½×°ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®, ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½, setdeadï¿½È¿ï¿½ï¿½ï¿½ hpbar->sethiddeningame(true);
+	// hp°¡ 0µÇ¸é Á×°ÔÇÏ´Â µ¨¸®°ÔÀÌÆ®, ¾ÆÁ÷±¸Çö¾ÈÇÔ, setdead¾È¿¡´Â hpbar->sethiddeningame(true);
 	// Stat->OnHpZero.AddUObject(this, &AHRCharacterPlayer::SetDead);
 }
 
@@ -289,8 +353,16 @@ void AHRCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 	EnhancedInputComponent->BindAction(ChangeControlAction, ETriggerEvent::Triggered, this, &AHRCharacterPlayer::ChangeCharacterControl);
 
-	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
+	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &AHRCharacterPlayer::Jump);
 	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+
+	EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &AHRCharacterPlayer::StartCrouch);
+	EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &AHRCharacterPlayer::StopCrouch);
+
+	EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AHRCharacterPlayer::StartSprint);
+	EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AHRCharacterPlayer::StopSprint);
+	EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Canceled, this, &AHRCharacterPlayer::StopSprint);
+
 
 	// using customized func
 		// view
@@ -307,18 +379,24 @@ void AHRCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	EnhancedInputComponent->BindAction(ToggleInventoryAction, ETriggerEvent::Triggered, this, &AHRCharacterPlayer::ToggleInventory);
 
 		// flashlight
-	//EnhancedInputComponent->BindAction(ToggleFlashlightAction, ETriggerEvent::Triggered, this, &AHRCharacterPlayer::ToggleFlashLight);
-
-	if (ToggleFlashlightAction) // ToggleFlashlightActionï¿½ï¿½ ï¿½ï¿½È¿ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
+	if (ToggleFlashlightAction) // ToggleFlashlightActionÀÌ À¯È¿ÇÑÁö È®ÀÎ
 	{
 		EnhancedInputComponent->BindAction(ToggleFlashlightAction, ETriggerEvent::Triggered, this, &AHRCharacterPlayer::ToggleFlashLight);
-		UE_LOG(LogTemp, Warning, TEXT("ToggleFlashlightAction BOUND successfully.")); // ï¿½ï¿½ï¿½Îµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Î±ï¿½ ï¿½ß°ï¿½
+		UE_LOG(LogTemp, Warning, TEXT("ToggleFlashlightAction BOUND successfully.")); // ¹ÙÀÎµù ¼º°ø ·Î±× Ãß°¡
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("ToggleFlashlightAction is NULLPTR. Cannot bind.")); // ï¿½ï¿½ï¿½Îµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Î±ï¿½ ï¿½ß°ï¿½
+		UE_LOG(LogTemp, Error, TEXT("ToggleFlashlightAction is NULLPTR. Cannot bind.")); // ¹ÙÀÎµù ½ÇÆÐ ·Î±× Ãß°¡
 	}
+
+		// map
+	EnhancedInputComponent->BindAction(ToggleMapAction, ETriggerEvent::Triggered, this, &AHRCharacterPlayer::ToggleMap);
+	EnhancedInputComponent->BindAction(CycleMapAction, ETriggerEvent::Triggered, this, &AHRCharacterPlayer::CycleMap);
+
 }
+
+
+
 
 //void AHRCharacterPlayer::Tick(float DeltaTime)
 //{
@@ -429,9 +507,87 @@ void AHRCharacterPlayer::SetCharacterControlData(const UHRCharacterControlData* 
 	GetMesh()->SetOwnerNoSee(CharacterControlData->bSetOwnerNoSee);
 }
 
+void AHRCharacterPlayer::Jump()
+{
+	if (UIManager && UIManager->IsUIActive())
+		return;
+
+	Super::Jump();
+
+	// could modify jump velocity or more
+}
+
+void AHRCharacterPlayer::StartCrouch()
+{
+	if (UIManager && UIManager->IsUIActive())
+		return;
+
+	if (CrouchTimeline)
+	{
+		CrouchTimeline->PlayFromStart();
+	}
+}
+void AHRCharacterPlayer::StopCrouch()
+{
+	if (UIManager && UIManager->IsUIActive())
+		return;
+
+	//UnCrouch();
+	if (CrouchTimeline)
+	{
+		CrouchTimeline->ReverseFromEnd();
+	}
+}
+
+void AHRCharacterPlayer::UpdateCrouch(float Value)
+{
+	const float StandingHeight = GetClass()->GetDefaultObject<ACharacter>()->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
+	const float CrouchingHeight = GetCharacterMovement()->CrouchedHalfHeight;
+	const float NewHeight = FMath::Lerp(StandingHeight, CrouchingHeight, Value);
+	GetCapsuleComponent()->SetCapsuleHalfHeight(NewHeight);
+}
+
+void AHRCharacterPlayer::OnCrouchTimelineFinished()
+{
+	if (CrouchTimeline)
+	{
+		if (CrouchTimeline->GetPlaybackPosition() == 0.0f)
+		{
+			UnCrouch();
+		}
+		else if (CrouchTimeline->GetPlaybackPosition() >= CrouchTimeline->GetTimelineLength())
+		{
+			Crouch();
+		}
+	}
+}
+
+void AHRCharacterPlayer::StartSprint()
+{
+	if (UIManager && UIManager->IsUIActive())
+		return;
+
+	GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+
+	UE_LOG(LogTemp, Warning, TEXT("StartSprint - MaxWalkSpeed actually set to: %f"), GetCharacterMovement()->MaxWalkSpeed);
+}
+void AHRCharacterPlayer::StopSprint()
+{
+	if (UIManager && UIManager->IsUIActive())
+		return;
+
+	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+
+	UE_LOG(LogTemp, Warning, TEXT("StopSprint - MaxWalkSpeed actually set to: %f"), GetCharacterMovement()->MaxWalkSpeed);
+
+}
+
 // FInputActionValue : struct that containing various input info ( refreshing every frame )
 void AHRCharacterPlayer::FirstPersonViewMove(const FInputActionValue& Value)
 {
+	if (UIManager && UIManager->IsUIActive())
+		return;
+
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
 	const FRotator Rotation = Controller->GetControlRotation();
@@ -447,6 +603,9 @@ void AHRCharacterPlayer::FirstPersonViewMove(const FInputActionValue& Value)
 }
 void AHRCharacterPlayer::FirstPersonViewLook(const FInputActionValue& Value)
 {
+	if (UIManager && UIManager->IsUIActive())
+		return;
+
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
 
 	AddControllerYawInput(LookAxisVector.X);
@@ -477,7 +636,7 @@ void AHRCharacterPlayer::ShoulderViewLook(const FInputActionValue& Value)
 
 void AHRCharacterPlayer::QuarterViewMove(const FInputActionValue& Value)
 {
-	// ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½, ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Î°ï¿½Ã³ï¿½ï¿½ ï¿½àµ¿
+	// ¿øº»ÄÚµå, ¿ÞÂÊÀÌ Á¤¸éÀÎ°ÍÃ³·³ Çàµ¿
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
 	float InputSizeSquared = MovementVector.SquaredLength();
@@ -497,137 +656,278 @@ void AHRCharacterPlayer::QuarterViewMove(const FInputActionValue& Value)
 	GetController()->SetControlRotation(FRotationMatrix::MakeFromX(MoveDirection).Rotator());
 	AddMovementInput(MoveDirection, MovementVectorSize);
 	
-	//// ï¿½ï¿½ï¿½1, ï¿½Þ½ï¿½ È¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ô¼ï¿½ ï¿½Ê¿ï¿½
+	//// ´ë¾È1, ¸Þ½¬ È¸Àü º¸°£ÇÔ¼ö ÇÊ¿ä
 	//FVector2D MovementVector = Value.Get<FVector2D>();
 
-	//	// ï¿½Ô·ï¿½ ï¿½ï¿½ï¿½ï¿½ Å©ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ë°¢ï¿½ï¿½ ï¿½Ìµï¿½ ï¿½Óµï¿½ ï¿½ï¿½ï¿½ï¿½)
+	//	// ÀÔ·Â º¤ÅÍ Å©±â Á¶Àý (´ë°¢¼± ÀÌµ¿ ¼Óµµ º¸Á¤)
 	//if (MovementVector.SquaredLength() > 1.0f)
 	//{
 	//	MovementVector.Normalize();
 	//}
 
-	//	// Ä³ï¿½ï¿½ï¿½Í°ï¿½ ï¿½Ù¶óº¸´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
-	//FRotator CameraRotation = Camera_Quarter->GetComponentRotation(); // ï¿½ï¿½ï¿½Íºï¿½ Ä«ï¿½Þ¶ï¿½ï¿½ï¿½ È¸ï¿½ï¿½
-	//FRotator YawRotation(0, CameraRotation.Yaw, 0); // Yaw È¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
-	//FVector MoveDirection = FRotationMatrix(YawRotation).GetScaledAxis(EAxis::X) * MovementVector.X + FRotationMatrix(YawRotation).GetScaledAxis(EAxis::Y) * MovementVector.Y; // forward, right vectorï¿½ï¿½ ï¿½Ì¿ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
+	//	// Ä³¸¯ÅÍ°¡ ¹Ù¶óº¸´Â ¹æÇâÀ» ±âÁØÀ¸·Î ÀÌµ¿ ¹æÇâ °è»ê
+	//FRotator CameraRotation = Camera_Quarter->GetComponentRotation(); // ÄõÅÍºä Ä«¸Þ¶óÀÇ È¸Àü
+	//FRotator YawRotation(0, CameraRotation.Yaw, 0); // Yaw È¸Àü¸¸ ÃßÃâ
+	//FVector MoveDirection = FRotationMatrix(YawRotation).GetScaledAxis(EAxis::X) * MovementVector.X + FRotationMatrix(YawRotation).GetScaledAxis(EAxis::Y) * MovementVector.Y; // forward, right vector¸¦ ÀÌ¿ëÇÏ¿© ¹æÇâÀ» ±¸ÇÔ.
 
 	//AddMovementInput(MoveDirection, 1.0f);
 
-	//// ï¿½Ìµï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ È¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (90ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
+	//// ÀÌµ¿ ¹æÇâÀÌ ÀÖÀ¸¸é ¸Þ½¬ È¸Àü Àû¿ë (90µµ º¸Á¤)
 	//if (!MoveDirection.IsNearlyZero())
 	//{
 	//	FRotator TargetRotation = MoveDirection.Rotation();
-	//	TargetRotation.Yaw -= 90.0f; // ï¿½âº» È¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	//	TargetRotation.Yaw -= 90.0f; // ±âº» È¸Àü°ª º¸Á¤
 
 	//	GetMesh()->SetWorldRotation(TargetRotation);
 	//}
 }
 
-//// ï¿½ï¿½ï¿½2, fpvï¿½ï¿½ È¸ï¿½ï¿½ï¿½ï¿½ ï¿½×´ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ç¾ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+//// ´ë¾È2, fpvÀÇ È¸ÀüÀÌ ±×´ë·Î º¸ÀüµÇ¾î ´ÙÀ½ »çÀÌÅ¬¿¡µµ ³ª¿À´Â ¹ö±×
 //void AHRCharacterPlayer::QuarterViewMove(const FInputActionValue& Value)
 //{
 //	FVector2D MovementVector = Value.Get<FVector2D>();
 //
-//	// ï¿½Ô·ï¿½ ï¿½ï¿½ï¿½ï¿½ Å©ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ë°¢ï¿½ï¿½ ï¿½Ìµï¿½ ï¿½Óµï¿½ ï¿½ï¿½ï¿½ï¿½)
+//	// ÀÔ·Â º¤ÅÍ Å©±â Á¶Àý (´ë°¢¼± ÀÌµ¿ ¼Óµµ º¸Á¤)
 //	if (MovementVector.SquaredLength() > 1.0f)
 //	{
 //		MovementVector.Normalize();
 //	}
 //
-//	// ï¿½ï¿½ï¿½Íºï¿½ Ä«ï¿½Þ¶ï¿½ï¿½ï¿½ È¸ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+//	// ÄõÅÍºä Ä«¸Þ¶óÀÇ È¸Àü °ª °¡Á®¿À±â
 //	FRotator CameraRotation = Camera_Quarter->GetComponentRotation();
 //	FRotator YawRotation(0, CameraRotation.Yaw, 0);
 //
-//	// Ä«ï¿½Þ¶ï¿½ Yaw È¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
+//	// Ä«¸Þ¶ó Yaw È¸Àü °ªÀ» ±âÁØÀ¸·Î ÀÌµ¿ ¹æÇâ º¤ÅÍ °è»ê
 //	FVector MoveDirection = FRotationMatrix(YawRotation).GetScaledAxis(EAxis::X) * MovementVector.X + FRotationMatrix(YawRotation).GetScaledAxis(EAxis::Y) * MovementVector.Y;
 //
-//	// ï¿½Ìµï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½
+//	// ÀÌµ¿ ¹æÇâÀ¸·Î Ä³¸¯ÅÍ ÀÌµ¿
 //	AddMovementInput(MoveDirection, 1.0f);
 //
 //
-//	// ï¿½Ìµï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ È¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+//	// ÀÌµ¿ ¹æÇâÀÌ ÀÖÀ» ¶§¸¸ ¸Þ½¬ È¸Àü Àû¿ë
 //	if (!MoveDirection.IsNearlyZero())
 //	{
-//		// ï¿½Ìµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
+//		// ÀÌµ¿ ¹æÇâ °¢µµ °è»ê
 //		FRotator TargetRotation = MoveDirection.Rotation();
 //
-//		// ï¿½Þ½ï¿½ È¸ï¿½ï¿½ ï¿½ï¿½ 90ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½Þ½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½ ï¿½ï¿½ï¿½â¿¡ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
+//		// ¸Þ½¬ È¸Àü ½Ã 90µµ ¿ÀÇÁ¼Â º¸Á¤ (¸Þ½¬ÀÇ ÃÊ±â ¹æÇâ¿¡ µû¶ó Á¶Àý)
 //		TargetRotation.Yaw -= 90.0f;
 //
-//		// ï¿½Îµå·¯ï¿½ï¿½ È¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ RInterp To ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)
+//		// ºÎµå·¯¿î È¸ÀüÀ» À§ÇØ RInterp To »ç¿ë (¼±ÅÃÀû)
 //		FRotator CurrentRotation = GetMesh()->GetComponentRotation();
-//		FRotator InterpolatedRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, GetWorld()->GetDeltaSeconds(), 10.0f); // 10.0fï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Óµï¿½
+//		FRotator InterpolatedRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, GetWorld()->GetDeltaSeconds(), 10.0f); // 10.0fÀº º¸°£ ¼Óµµ
 //
 //		GetMesh()->SetWorldRotation(InterpolatedRotation);
 //	}
 //}
 
-void AHRCharacterPlayer::Interact()
+// spinning off from 
+void AHRCharacterPlayer::TraceInteractable()
 {
-	// linetrace
-	APlayerController* playerController = Cast<APlayerController>(GetController());
-	if (!playerController) return;
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	if (!PlayerController) return;
 
 	FVector start;
-	FVector end;
+	FRotator rotation;
+	PlayerController->GetPlayerViewPoint(start, rotation);
+
+	FVector end = start + (rotation.Vector() * 1000.0f);
 	FHitResult hitResult;
-
-	FVector cameraLocation;
-	FRotator cameraRotation;
-	playerController->GetPlayerViewPoint(cameraLocation, cameraRotation);
-
-	start = cameraLocation;
-	end = start + (cameraRotation.Vector() * 1000.0f); // modifiable line range
-
-	// collision query decision struct
 	FCollisionQueryParams traceParams;
-	traceParams.AddIgnoredActor(this); // ignore itself (actor)
+	traceParams.AddIgnoredActor(this);
 
-	// shoot trace
 	bool bHit = GetWorld()->LineTraceSingleByChannel(
 		hitResult,
 		start,
 		end,
-		ECC_Visibility,		// collision channel
-		traceParams			// additional utility
+		ECC_GameTraceChannel1, // ECC_Visibility,
+		traceParams
 	);
 
-	// debug line
-	FColor lineColor = bHit ? FColor::Green : FColor::Red;
-	DrawDebugLine(GetWorld(), start, end, lineColor, false, 1.0f, 0, 0.5f);
+	// debug ~
+	if (bHit)
+	{
+		// LineTrace¿¡ ¸ÂÀº ¾×ÅÍ¿Í ÄÄÆ÷³ÍÆ®ÀÇ ÀÌ¸§À» ·Î±×·Î Ãâ·Â
+		UE_LOG(LogTemp, Warning, TEXT("LineTrace HIT --- Actor: [%s], Component: [%s]"),
+			*hitResult.GetActor()->GetName(),
+			*hitResult.GetComponent()->GetName());
+	}
+	else
+	{
+		// ¾Æ¹«°Íµµ ¸ÂÁö ¾Ê¾ÒÀ» ¶§ ·Î±× Ãâ·Â
+		UE_LOG(LogTemp, Warning, TEXT("LineTrace HIT --- NOTHING"));
+	}
+	// ~ debug
+
+	AHRInteractableActorBase* FoundInteractable = nullptr;
 
 	if (bHit)
 	{
-		AActor* HitActor = hitResult.GetActor();
-		if (HitActor)
+		AActor* hitActor = hitResult.GetActor();
+
+		// should be bigger than around 100
+		// cuz it calculates distance from each pivot
+		const float maxInteractionDistance = 250.0f;	
+
+		// check distance
+		if (hitActor && FVector::Dist(GetActorLocation(), hitActor->GetActorLocation()) < maxInteractionDistance)
 		{
-			// Item
-			IHRItemInterface* Pickable = Cast<IHRItemInterface>(HitActor);
-			if (Pickable)
-			{
-				if (Pickable->IsPickable())
-				{
-					AddItemToInventory(HitActor);
+			FoundInteractable = Cast<AHRInteractableActorBase>(hitActor);
 
-					Pickable->OnPickedUp(this);	// what should happen after picked up
+			// debug
+			const float distance = FVector::Dist(GetActorLocation(), hitActor->GetActorLocation());
+			UE_LOG(LogTemp, Log, TEXT("1. Trace Hit: %s"), *hitActor->GetName());
+			UE_LOG(LogTemp, Log, TEXT("2. Distance to Target: %f"), distance);
+		}
+	}
 
-					// debug
-					UE_LOG(LogTemp, Warning, TEXT("Item picked up : %s"), *HitActor->GetName());
-				}
-			}
-			else // not an item
+	if (FoundInteractable == nullptr)
+	{
+		// ÀÌÀü¿¡ Æ÷Ä¿½ºµÈ ¾×ÅÍ°¡ ÀÖ¾ú´Ù¸é Æ÷Ä¿½º¸¦ ÀÒ°Ô ÇÔ
+		if (IsValid(FocusedActor))
+		{
+			FocusedActor->OnFocusLost();
+			FocusedActor = nullptr;
+		}
+	}
+	else
+	{
+		if (FoundInteractable != FocusedActor)
+		{
+			if (FocusedActor)
 			{
-				IHRInteractableActorInterface* Interactable = Cast<IHRInteractableActorInterface>(HitActor);
-				if (Interactable)
-				{
-					if (Interactable->IsInteractable())
-					{
-						// couldn't use like 'Interactable->interact();'
-						// cuz its BlueprintNativeEvent
-						IHRInteractableActorInterface::Execute_BP_Interact(HitActor, this);
-					}
-				}
+				FocusedActor->OnFocusLost();
 			}
+
+			FoundInteractable->OnFocusGained();
+			FocusedActor = FoundInteractable;
+		}
+	}
+}
+
+void AHRCharacterPlayer::Interact()
+{
+	//// linetrace
+	//APlayerController* playerController = Cast<APlayerController>(GetController());
+	//if (!playerController) return;
+
+	//FVector start;
+	//FVector end;
+	//FHitResult hitResult;
+
+	//FVector cameraLocation;
+	//FRotator cameraRotation;
+	//playerController->GetPlayerViewPoint(cameraLocation, cameraRotation);
+
+	//start = cameraLocation;
+	//end = start + (cameraRotation.Vector() * 1000.0f); // modifiable line range
+
+	//// collision query decision struct
+	//FCollisionQueryParams traceParams;
+	//traceParams.AddIgnoredActor(this); // ignore itself (actor)
+
+	//// shoot trace
+	//bool bHit = GetWorld()->LineTraceSingleByChannel(
+	//	hitResult,
+	//	start,
+	//	end,
+	//	ECC_Visibility,		// collision channel
+	//	traceParams			// additional utility
+	//);
+
+	//// debug line
+	//FColor lineColor = bHit ? FColor::Green : FColor::Red;
+	//DrawDebugLine(GetWorld(), start, end, lineColor, false, 1.0f, 0, 0.5f);
+
+	//if (bHit)
+	//{
+	//	AActor* HitActor = hitResult.GetActor();
+	//	if (HitActor)
+	//	{
+	//		// Item
+	//		IHRItemInterface* Pickable = Cast<IHRItemInterface>(HitActor);
+	//		if (Pickable)
+	//		{
+	//			if (Pickable->IsPickable())
+	//			{
+	//				AddItemToInventory(HitActor);
+
+	//				Pickable->OnPickedUp(this);	// what should happen after picked up
+
+	//				// debug
+	//				UE_LOG(LogTemp, Warning, TEXT("Item picked up : %s"), *HitActor->GetName());
+	//			}
+	//		}
+	//		else // not an item
+	//		{
+	//			IHRInteractableActorInterface* Interactable = Cast<IHRInteractableActorInterface>(HitActor);
+	//			if (Interactable)
+	//			{
+	//				if (Interactable->IsInteractable())
+	//				{
+	//					// couldn't use like 'Interactable->interact();'
+	//					// cuz its BlueprintNativeEvent
+	//					IHRInteractableActorInterface::Execute_BP_Interact(HitActor, this);
+	//				}
+	//			}
+	//		}
+	//	}
+	//}
+
+	// only for debug
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	if (PlayerController)
+	{
+		FVector start;
+		FRotator rotation;
+		PlayerController->GetPlayerViewPoint(start, rotation);
+
+		FVector end = start + (rotation.Vector() * 1000.0f);
+		FHitResult hitResult;
+		FCollisionQueryParams traceParams;
+		traceParams.AddIgnoredActor(this);
+
+		bool bHit = GetWorld()->LineTraceSingleByChannel(
+			hitResult,
+			start,
+			end,
+			ECC_Visibility,
+			traceParams
+		);
+
+		FColor lineColor = bHit ? FColor::Green : FColor::Red;
+		DrawDebugLine(GetWorld(), start, end, lineColor, false, 2.0f, 0, 1.0f);
+	}
+
+	//// Trace ·ÎÁ÷ÀÌ ¸ðµÎ »ç¶óÁö°í, ÀÌ Á¶°Ç¹®¸¸ ³²À½
+	//if (FocusedActor) // Å¸ÀÌ¸Ó°¡ Ã£¾Æ³õÀº ¾×ÅÍ¸¦ ¹Ù·Î »ç¿ë
+	//{
+	//	// ItemÀÎÁö È®ÀÎ
+	//	if (IHRItemInterface* Pickable = Cast<IHRItemInterface>(FocusedActor))
+	//	{
+	//		if (Pickable->IsPickable())
+	//		{
+	//			AddItemToInventory(FocusedActor);
+	//			Pickable->OnPickedUp(this);
+	//		}
+	//	}
+	//	// ItemÀÌ ¾Æ´Ï¸é ÀÏ¹Ý InteractableÀÎÁö È®ÀÎ
+	//	else if (IHRInteractableActorInterface* Interactable = Cast<IHRInteractableActorInterface>(FocusedActor))
+	//	{
+	//		if (Interactable->IsInteractable())
+	//		{
+	//			IHRInteractableActorInterface::Execute_BP_Interact(FocusedActor, this);
+	//		}
+	//	}
+	//}
+
+	if (FocusedActor)
+	{
+		if (FocusedActor->GetClass()->ImplementsInterface(UHRInteractableActorInterface::StaticClass()))
+		{
+			// ÇÃ·¹ÀÌ¾î´Â ´õ ÀÌ»ó ¾ÆÀÌÅÛÀÎÁö, ¹®ÀÎÁö ±¸º°ÇÏÁö ¾Ê½À´Ï´Ù.
+			// ±×³É »óÈ£ÀÛ¿ëÇÏ¶ó´Â ½ÅÈ£¸¸ º¸³À´Ï´Ù.
+			IHRInteractableActorInterface::Execute_BP_Interact(FocusedActor, this);
 		}
 	}
 }
@@ -644,7 +944,7 @@ void AHRCharacterPlayer::AddItemToInventory(AActor* InItem)
 
 		if (InventoryWidgetInstance)
 		{
-			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½Ö´ï¿½ UpdateInventoryUI ï¿½Ô¼ï¿½ È£ï¿½ï¿½
+			// ºí·çÇÁ¸°Æ®¿¡ ÀÖ´Â UpdateInventoryUI ÇÔ¼ö È£Ãâ
 			FOutputDeviceNull n;
 			InventoryWidgetInstance->CallFunctionByNameWithArguments
 			(TEXT("UpdateInventoryUI"), n, nullptr, true);
@@ -662,25 +962,66 @@ void AHRCharacterPlayer::ToggleInventory()
 	}
 }
 
+void AHRCharacterPlayer::RegisterInteractableActor(AHRInteractableActorBase* InteractableActor)
+{
+	OverlappedInteractableActors.Add(InteractableActor);
+
+	if (OverlappedInteractableActors.Num() == 1)
+	{
+		StartInteractionTrace();
+	}
+}
+
+void AHRCharacterPlayer::UnregisterInteractableActor(AHRInteractableActorBase* InteractableActor)
+{
+	OverlappedInteractableActors.Remove(InteractableActor);
+
+	if (OverlappedInteractableActors.Num() == 0)
+	{
+		StopInteractionTrace();
+	}
+}
+
+void AHRCharacterPlayer::StartInteractionTrace()
+{
+	GetWorld()->GetTimerManager().SetTimer(
+		TraceTimerHandle,
+		this,
+		&AHRCharacterPlayer::TraceInteractable,
+		0.01f,
+		true);
+}
+
+void AHRCharacterPlayer::StopInteractionTrace()
+{
+	GetWorld()->GetTimerManager().ClearTimer(TraceTimerHandle);
+
+	if (FocusedActor)
+	{
+		FocusedActor->OnFocusLost();
+		FocusedActor = nullptr;
+	}
+}
+
 void AHRCharacterPlayer::AttachFlashlight(AHRItemBase* FlashlightToAttach)
 {
-	if (FlashlightToAttach && FlashlightHolder) // FlashlightHolder ï¿½ï¿½ï¿½
+	if (FlashlightToAttach && FlashlightHolder) // FlashlightHolder »ç¿ë
 	{
 		EquippedFlashlight = FlashlightToAttach;
 		EquippedFlashlight->AttachToComponent(
-			FlashlightHolder, // FlashlightHolderï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
-			FAttachmentTransformRules::SnapToTargetIncludingScale // ï¿½ï¿½Ä¡/È¸ï¿½ï¿½ï¿½ï¿½ Holderï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+			FlashlightHolder, // FlashlightHolder¿¡ ºÎÂø
+			FAttachmentTransformRules::SnapToTargetIncludingScale // À§Ä¡/È¸ÀüÀ» Holder¿¡ ¸ÂÃã
 		);
 		EquippedFlashlight->SetOwner(this);
 
-		// Holderï¿½ï¿½ ï¿½Ù¿ï¿½ï¿½ï¿½ï¿½Ç·ï¿½, ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã¼ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡/È¸ï¿½ï¿½ï¿½ï¿½ (0,0,0)ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
+		// Holder¿¡ ºÙ¿´À¸¹Ç·Î, ¼ÕÀüµî ÀÚÃ¼ÀÇ »ó´ë À§Ä¡/È¸ÀüÀº (0,0,0)À¸·Î ¸®¼Â (¼±ÅÃ »çÇ×)
 		EquippedFlashlight->SetActorRelativeLocation(FVector::ZeroVector);
 		EquippedFlashlight->SetActorRelativeRotation(FRotator::ZeroRotator);
 
 		UE_LOG(LogTemp, Log, TEXT("Flashlight attached to FlashlightHolder: %s"), *EquippedFlashlight->GetName());
 
 		EquippedFlashlight->SetActorHiddenInGame(false);
-		// ... (ï¿½Þ½ï¿½ ï¿½ï¿½ï¿½Ã¼ï¿½ Ã³ï¿½ï¿½) ...
+		// ... (¸Þ½Ã °¡½Ã¼º Ã³¸®) ...
 	}
 }
 
@@ -701,18 +1042,125 @@ void AHRCharacterPlayer::ToggleFlashLight()
 	}
 	else
 	{
-	UE_LOG(LogTemp, Error, TEXT("ToggleFlashLight: EquippedFlashlight is not VALID"));
+		UE_LOG(LogTemp, Error, TEXT("ToggleFlashLight: EquippedFlashlight is not VALID"));
 	}
 }
 
-void AHRCharacterPlayer::SetupCharacterWidget(UHRUserWidget* InUserWidget)
+void AHRCharacterPlayer::AcquireMap(EMapType NewMapType)
 {
-	UHRHpBarWidget* HpBarWidget = Cast<UHRHpBarWidget>(InUserWidget);
-	if (HpBarWidget)
-	{
-		HpBarWidget->SetMaxHp(Stat->GetMaxHp());
-		HpBarWidget->UpdateHpBar(Stat->GetCurrentHp());
+	// OwnedMaps ¸ñ·Ï(Set)¿¡ »õ·Î¿î Áöµµ¸¦ Ãß°¡ÇÕ´Ï´Ù.
+	OwnedMaps.Add(NewMapType);
 
-		Stat->OnHpChanged.AddUObject(HpBarWidget, &UHRHpBarWidget::UpdateHpBar);
+	// ¸¸¾à ÇÃ·¹ÀÌ¾î°¡ ÀÌÀü¿¡ ¾Æ¹« Áöµµµµ °¡Áö°í ÀÖÁö ¾Ê¾Ò´Ù¸é (Ã³À½ Áöµµ¸¦ ¾ò´Â °æ¿ì),
+	// ÇöÀç ¼±ÅÃµÈ Áöµµ¸¦ ¹æ±Ý ¾òÀº Áöµµ·Î ¼³Á¤ÇØÁÝ´Ï´Ù.
+	if (CurrentMapType == EMapType::EMT_None)
+	{
+		CurrentMapType = NewMapType;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Map Acquired: %s"), *UEnum::GetValueAsString(NewMapType));
+
+	// ¸¸¾à ¸Ê À§Á¬ÀÌ ¿­·ÁÀÖ´Â »óÅÂ¿¡¼­ »õ Áöµµ¸¦ È¹µæÇß´Ù¸é, Áï½Ã ¾÷µ¥ÀÌÆ®ÇÕ´Ï´Ù.
+	if (MapWidgetInstance && MapWidgetInstance->IsInViewport())
+	{
+		FOutputDeviceNull n;
+		MapWidgetInstance->CallFunctionByNameWithArguments(TEXT("UpdateMapImage"), n, nullptr, true);
 	}
 }
+
+void AHRCharacterPlayer::CycleMap()
+{
+	// ¼ÒÀ¯ÇÑ Áöµµ°¡ ÇÏ³ªµµ ¾ø´Ù¸é ÇÔ¼ö¸¦ Áï½Ã Á¾·áÇÕ´Ï´Ù.
+	if (OwnedMaps.Num() == 0)
+	{
+		CurrentMapType = EMapType::EMT_None;
+		UE_LOG(LogTemp, Log, TEXT("Player owns no maps to cycle."));
+		return;
+	}
+
+	// TSetÀ» TArray·Î º¯È¯ÇØ¾ß ¼ø¼­´ë·Î Á¢±ÙÇÒ ¼ö ÀÖ½À´Ï´Ù.
+	TArray<EMapType> OwnedMapsArray = OwnedMaps.Array();
+	// Enum ¼ø¼­´ë·Î Á¤·ÄÇÏ¿© ÀÏ°üµÈ ¼ø¼­¸¦ º¸ÀåÇÕ´Ï´Ù.
+	OwnedMapsArray.Sort();
+
+	// ÇöÀç ¼±ÅÃµÈ ÁöµµÀÇ ÀÎµ¦½º¸¦ Ã£½À´Ï´Ù.
+	int32 CurrentIndex = OwnedMapsArray.Find(CurrentMapType);
+
+	// ÇöÀç ¼±ÅÃµÈ ¸ÊÀÌ ¾ø°Å³ª ¸ñ·Ï¿¡ ¾øÀ¸¸é(INDEX_NONE), ±×³É Ã¹ ¹øÂ° ¼ÒÀ¯ Áöµµ·Î ¼³Á¤ÇÕ´Ï´Ù.
+	if (CurrentIndex == INDEX_NONE)
+	{
+		CurrentMapType = OwnedMapsArray[0];
+	}
+	else
+	{
+		// ´ÙÀ½ ÀÎµ¦½º·Î ÀÌµ¿ÇÕ´Ï´Ù.
+		CurrentIndex++;
+		// ¸¸¾à ÀÎµ¦½º°¡ ¹è¿­ÀÇ ³¡À» ³Ñ¾î°¡¸é, ´Ù½Ã 0¹øÀ¸·Î (Ã³À½À¸·Î) µ¹¾Æ°©´Ï´Ù.
+		if (CurrentIndex >= OwnedMapsArray.Num())
+		{
+			CurrentIndex = 0;
+		}
+		CurrentMapType = OwnedMapsArray[CurrentIndex];
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Current Map Set To: %s"), *UEnum::GetValueAsString(CurrentMapType));
+
+	// ¸ÊÀÌ ¿­·ÁÀÖ´Ù¸é Áï½Ã ¾÷µ¥ÀÌÆ®
+	if (MapWidgetInstance && MapWidgetInstance->IsInViewport())
+	{
+		FOutputDeviceNull n;
+		MapWidgetInstance->CallFunctionByNameWithArguments(TEXT("UpdateMapImage"), n, nullptr, true);
+	}
+}
+
+void AHRCharacterPlayer::ToggleMap()
+{
+	APlayerController* PlayerController = GetController<APlayerController>();
+	if (!PlayerController)
+	{
+		return;
+	}
+
+	if (!UIManager)
+	{
+		UE_LOG(LogTemp, Error, TEXT("UIManager component is not valid on this character"));
+		return;
+	}
+
+	if (MapWidgetInstance && MapWidgetInstance->IsInViewport())
+	{
+		// [Áöµµ ²ô±â] ÀÌ ·ÎÁ÷Àº ±×´ë·Î À¯ÁöÇÕ´Ï´Ù.
+		UIManager->SetInputModeGameCustom();
+
+		MapWidgetInstance->RemoveFromParent();
+		MapWidgetInstance = nullptr;
+	}
+	else
+	{
+		// [Áöµµ ÄÑ±â] ·ÎÁ÷ÀÌ ¸Å¿ì °£°áÇØÁý´Ï´Ù.
+		if (MapWidgetClass)
+		{
+			MapWidgetInstance = CreateWidget<UUserWidget>(PlayerController, MapWidgetClass);
+			if (MapWidgetInstance)
+			{
+				MapWidgetInstance->AddToViewport(); // »ý¼ºÇÏ°í ºäÆ÷Æ®¿¡ Ãß°¡ÇÏ´Â ¿ªÇÒ¸¸ ¼öÇà
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("MapWidgetClass is not set in the Character Blueprint!"));
+		}
+	}
+}
+
+//void AHRCharacterPlayer::SetupCharacterWidget(UHRUserWidget* InUserWidget)
+//{
+//	UHRHpBarWidget* HpBarWidget = Cast<UHRHpBarWidget>(InUserWidget);
+//	if (HpBarWidget)
+//	{
+//		HpBarWidget->SetMaxHp(Stat->GetMaxHp());
+//		HpBarWidget->UpdateHpBar(Stat->GetCurrentHp());
+//
+//		Stat->OnHpChanged.AddUObject(HpBarWidget, &UHRHpBarWidget::UpdateHpBar);
+//	}
+//}
