@@ -30,6 +30,10 @@ public:
 
 // interaction prompt
 protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Visuals")
+	TObjectPtr<UStaticMeshComponent> Mesh1;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Visuals")
+	TObjectPtr<UStaticMeshComponent> Mesh2;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction UI")
 	UWidgetComponent* InteractionPromptWidget;		// 액터의 컴포넌트로 들어가는거라 액터와 동시생성
