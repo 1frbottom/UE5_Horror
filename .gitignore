@@ -77,7 +77,7 @@ UE5_HorrorGame/DerivedDataCache/*
 UE5_HorrorGame/Content/Map/LevelDevelop/_GENERATED/*
 
 # Huge Assets
-UE5_HorrorGame/Content/Asset/NonGit/*
+UE5_HorrorGame/Content/Asset/*
 UE5_HorrorGame/Content/AssetUsing/*
-!UE5_HorrorGame/Content/Asset/NonGit/.gitkeep
-!UE5_HorrorGame/Content/Asset/NonGit/list.txt
+UE5_HorrorGame/Content/Audio/*
+UE5_HorrorGame/Content/Animation/*
