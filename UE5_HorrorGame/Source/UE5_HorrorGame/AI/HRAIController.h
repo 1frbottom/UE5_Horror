@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "Perception/AIPerceptionComponent.h"
+
 #include "HRAIController.generated.h"
 
 /**
@@ -22,6 +24,9 @@ public:
 
 protected:
 	virtual void OnPossess(APawn* InPawn) override;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI", meta = (AllowPrivateAccess = "true"))
+	UAIPerceptionComponent* AIPerceptionComp;
 
 private:
 	UPROPERTY()

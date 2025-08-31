@@ -32,9 +32,13 @@
 #include "CharacterStat/HRCharacterStatComponent.h"
 #include "UI/HRWidgetComponent.h"
 #include "UI/HRHpBarWidget.h"
+#include "UI/HRStaminaBarWidget.h"
 
 #include "Player/HRUIManagerComponent.h"
 
+#include "Player/HRPlayerController.h"
+
+#include "Engine/Engine.h"	// ingame debug
 
 AHRCharacterPlayer::AHRCharacterPlayer()
 {
@@ -59,7 +63,7 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 
 
 	WalkSpeed = 200.0f;
-	SprintSpeed = 300.0f;
+	SprintSpeed = 1000.0f;
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.0f;
 
@@ -72,13 +76,13 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 	GetMesh()->SetCollisionProfileName(TEXT("CharacterMesh"));
 
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> CharacterMeshRef(TEXT("/Script/Engine.SkeletalMesh'/Game/AssetUsing/JW/NonGit/NonFab/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple'"));
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> CharacterMeshRef(TEXT("/Script/Engine.SkeletalMesh'/Game/Asset/NonFab/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple'"));
 	if (CharacterMeshRef.Object)
 	{
 		GetMesh()->SetSkeletalMesh(CharacterMeshRef.Object);
 	}
 	 
-	static ConstructorHelpers::FClassFinder<UAnimInstance> AnimInstanceClassRef(TEXT("/Game/AssetUsing/JW/NonGit/NonFab/Mannequins/Animations/ABP_Manny.ABP_Manny_C"));
+	static ConstructorHelpers::FClassFinder<UAnimInstance> AnimInstanceClassRef(TEXT("/Game/Asset/NonFab/Mannequins/Animations/ABP_Manny.ABP_Manny_C"));
 	if (AnimInstanceClassRef.Class)
 	{
 		GetMesh()->SetAnimInstanceClass(AnimInstanceClassRef.Class);
@@ -250,20 +254,9 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 	// Stat Component
 	Stat = CreateDefaultSubobject<UHRCharacterStatComponent>(TEXT("Stat"));
 
-	// Widget Component
-	//HpBar = CreateDefaultSubobject<UHRWidgetComponent>(TEXT("Widget"));
-	//HpBar->SetupAttachment(GetMesh());
-	//HpBar->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
-
-	//static ConstructorHelpers::FClassFinder<UUserWidget> HpBarWidgetRef(TEXT("/Game/UI/WBP_HpBar.WBP_HpBar_C"));
-	//if (HpBarWidgetRef.Class)
-	//{
-	//	HpBar->SetWidgetClass(HpBarWidgetRef.Class);
-	//	HpBar->SetWidgetSpace(EWidgetSpace::Screen);
-	//	HpBar->SetDrawSize(FVector2D(150.0f, 15.0f));
-	//	HpBar->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-	//}
+	SprintCost_sec = 10.0f;
+	JumpStaminaCost = 30.0f;
+	StaminaRegenRate_sec = 5.0f;
 
 	// Inventory Component
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
@@ -274,6 +267,11 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 
 	// Map
 	CurrentMapType = EMapType::EMT_None;
+
+	// AI
+	StimuliSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("StimuliSource"));
+
+
 }
 
 void AHRCharacterPlayer::BeginPlay()
@@ -333,14 +331,151 @@ void AHRCharacterPlayer::BeginPlay()
 		OnTimelineFinished.BindUFunction(this, FName("OnCrouchTimelineFinished"));
 		CrouchTimeline->SetTimelineFinishedFunc(OnTimelineFinished);
 		CrouchTimeline->SetTimelineLengthMode(ETimelineLengthMode::TL_LastKeyFrame);
+
+	// Stamina Widget
+		if (IsValid(StaminaBarWidgetClass))
+		{
+			StaminaBarWidgetInstance = CreateWidget<UHRStaminaBarWidget>(GetWorld(), StaminaBarWidgetClass);
+			if (IsValid(StaminaBarWidgetInstance))
+			{
+				StaminaBarWidgetInstance->AddToViewport();
+			}
+		}
+
+	// Hp Effect Widget
+		if (IsValid(HpEffectWidgetClass))
+		{
+			HpEffectWidgetInstance = CreateWidget<UHRHpEffectWidget>(GetWorld(), HpEffectWidgetClass);
+			if (IsValid(HpEffectWidgetInstance))
+			{
+				HpEffectWidgetInstance->AddToViewport();
+				HpEffectWidgetInstance->SetVisibility(ESlateVisibility::HitTestInvisible);
+			}
+		}
+
+
 }
 
 void AHRCharacterPlayer::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	// hp가 0되면 죽게하는 델리게이트, 아직구현안함, setdead안에는 hpbar->sethiddeningame(true);
-	// Stat->OnHpZero.AddUObject(this, &AHRCharacterPlayer::SetDead);
+	Stat->OnHpZero.AddUObject(this, &AHRCharacterPlayer::SetDead);
+	Stat->OnStaminaChanged.AddUObject(this, &AHRCharacterPlayer::OnStaminaChanged);
+
+	Stat->OnHpChanged.AddUObject(this, &AHRCharacterPlayer::OnHpChanged);
+
+
+}
+
+void AHRCharacterPlayer::SetDead()
+{
+	APlayerController* pc = Cast<AHRPlayerController>(GetController());
+	if (pc)
+	{
+		DisableInput(pc);
+	}
+
+	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
+
+	// TODO : add dead montage
+
+	SetActorEnableCollision(false);
+
+	if (IsValid(StaminaBarWidgetInstance))
+	{
+		StaminaBarWidgetInstance->SetVisibility(ESlateVisibility::Hidden);
+	}
+
+	if (IsValid(HpEffectWidgetInstance))
+	{
+		HpEffectWidgetInstance->UpdateHpEffect(1.0f);
+	}
+
+	// TODO : add dead UI
+
+	// TODO : restart Level
+}
+
+// called by every 0.1 sec
+void AHRCharacterPlayer::UpdateStamina()
+{
+	// debug
+	if (GEngine)
+	{
+		FString DebugMessage = FString::Printf(TEXT("Current Stamina: %.1f"), Stat->GetCurrentStamina());
+		GEngine->AddOnScreenDebugMessage(-1, 0.1f, FColor::Yellow, DebugMessage);
+	}
+
+	if (GetCharacterMovement()->MaxWalkSpeed == SprintSpeed)
+	{
+		Stat->UseStamina(SprintCost_sec * 0.1f);
+
+		if (Stat->GetCurrentStamina() <= 0)
+		{
+			GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+		}
+	}
+	else
+	{
+		Stat->RegenStamina(StaminaRegenRate_sec * 0.1f);
+
+		if (Stat->GetCurrentStamina() >= Stat->GetTotalStat().Stamina)
+		{
+			GetWorld()->GetTimerManager().ClearTimer(StaminaTimerHandle);
+		}
+	}
+}
+
+void AHRCharacterPlayer::OnStaminaChanged(float CurrentStamina)
+{
+	if (IsValid(StaminaBarWidgetInstance))
+	{
+		const float MaxStamina = Stat->GetTotalStat().Stamina;
+		StaminaBarWidgetInstance->UpdateStaminaBar(CurrentStamina, MaxStamina);
+	}
+}
+
+void AHRCharacterPlayer::OnHpChanged(float CurrentHp)
+{
+	if (!IsValid(HpEffectWidgetInstance) || !IsValid(Stat))
+	{
+		return;
+	}
+
+	const float MaxHp = Stat->GetTotalStat().MaxHp;
+	if (MaxHp <= 0.0f)
+	{
+		return;
+	}
+
+	const float HealthPercent = FMath::Clamp(CurrentHp / MaxHp, 0.0f, 1.0f);
+	const float EffectAlpha = 1.0f - HealthPercent;
+
+	if (IsValid(HpEffectWidgetInstance))
+	{
+		HpEffectWidgetInstance->UpdateHpEffect(EffectAlpha);
+	}
+}
+
+float AHRCharacterPlayer::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	if (Stat)
+	{
+		Stat->LoseHp(DamageAmount);
+	}
+
+	if (GEngine)
+	{
+		FString DebugMessage = FString::Printf(TEXT("Damage Taken: %.1f"), DamageAmount);
+
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, DebugMessage);
+	}
+
+	// for additional damage logic
+	return DamageAmount;
 }
 
 // IMC : mapping input to specipic action
@@ -354,7 +489,7 @@ void AHRCharacterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 	EnhancedInputComponent->BindAction(ChangeControlAction, ETriggerEvent::Triggered, this, &AHRCharacterPlayer::ChangeCharacterControl);
 
-	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &AHRCharacterPlayer::Jump);
+	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AHRCharacterPlayer::Jump);
 	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
 	EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &AHRCharacterPlayer::StartCrouch);
@@ -512,8 +647,15 @@ void AHRCharacterPlayer::Jump()
 	if (UIManager && UIManager->IsUIActive())
 		return;
 
-	Super::Jump();
+	if (Stat->GetCurrentStamina() >= JumpStaminaCost)
+	{
+		Stat->UseStamina(JumpStaminaCost);
+		Super::Jump();
 
+		// 점프 시에도 스태미나 재생을 잠시 멈춤
+		StopSprint(); // StopSprint가 타이머를 재생 로직으로 바꾸므로 재활용
+	}
+	
 	// could modify jump velocity or more
 }
 
@@ -567,10 +709,20 @@ void AHRCharacterPlayer::StartSprint()
 	if (UIManager && UIManager->IsUIActive())
 		return;
 
-	GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+	if (Stat->GetCurrentStamina() > 0)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
 
-	UE_LOG(LogTemp, Warning, TEXT("StartSprint - MaxWalkSpeed actually set to: %f"), GetCharacterMovement()->MaxWalkSpeed);
+		GetWorld()->GetTimerManager().SetTimer(
+			StaminaTimerHandle,
+			this,
+			&AHRCharacterPlayer::UpdateStamina,
+			0.1f,
+			true  // 반복
+		);
+	}
 }
+
 void AHRCharacterPlayer::StopSprint()
 {
 	if (UIManager && UIManager->IsUIActive())
@@ -578,8 +730,15 @@ void AHRCharacterPlayer::StopSprint()
 
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 
-	UE_LOG(LogTemp, Warning, TEXT("StopSprint - MaxWalkSpeed actually set to: %f"), GetCharacterMovement()->MaxWalkSpeed);
-
+	// 스태미나 타이머를 시작/재시작하여 재생 로직을 타도록 함
+	// 이미 타이머가 실행 중(소모 중)이어도 SetTimer는 타이머를 리셋하고 새로 시작함
+	GetWorld()->GetTimerManager().SetTimer(
+		StaminaTimerHandle,
+		this,
+		&AHRCharacterPlayer::UpdateStamina,
+		0.1f,
+		true
+	);
 }
 
 // FInputActionValue : struct that containing various input info ( refreshing every frame )
@@ -1129,7 +1288,6 @@ void AHRCharacterPlayer::ToggleMap()
 
 	if (MapWidgetInstance && MapWidgetInstance->IsInViewport())
 	{
-		// [지도 끄기] 이 로직은 그대로 유지합니다.
 		UIManager->SetInputModeGameCustom();
 
 		MapWidgetInstance->RemoveFromParent();
@@ -1137,13 +1295,12 @@ void AHRCharacterPlayer::ToggleMap()
 	}
 	else
 	{
-		// [지도 켜기] 로직이 매우 간결해집니다.
 		if (MapWidgetClass)
 		{
 			MapWidgetInstance = CreateWidget<UUserWidget>(PlayerController, MapWidgetClass);
 			if (MapWidgetInstance)
 			{
-				MapWidgetInstance->AddToViewport(); // 생성하고 뷰포트에 추가하는 역할만 수행
+				MapWidgetInstance->AddToViewport(); 
 			}
 		}
 		else
@@ -1152,15 +1309,3 @@ void AHRCharacterPlayer::ToggleMap()
 		}
 	}
 }
-
-//void AHRCharacterPlayer::SetupCharacterWidget(UHRUserWidget* InUserWidget)
-//{
-//	UHRHpBarWidget* HpBarWidget = Cast<UHRHpBarWidget>(InUserWidget);
-//	if (HpBarWidget)
-//	{
-//		HpBarWidget->SetMaxHp(Stat->GetMaxHp());
-//		HpBarWidget->UpdateHpBar(Stat->GetCurrentHp());
-//
-//		Stat->OnHpChanged.AddUObject(HpBarWidget, &UHRHpBarWidget::UpdateHpBar);
-//	}
-//}

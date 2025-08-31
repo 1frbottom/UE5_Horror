@@ -12,12 +12,13 @@ AHRGameMode::AHRGameMode()
 
 	// except for the metadatas below, using default ( by Unreal )
 
-	// in editor, i use BP_HRGameMode
-	// Default Pawn Class
-	DefaultPawnClass = AHRCharacterPlayer::StaticClass();	// class instance
-
-	// Player Controller class
+	//DefaultPawnClass = AHRCharacterPlayer::StaticClass();
+	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/Blueprint/Player/BP_CharacterPlayer.BP_CharacterPlayer_C"));
+	if (PlayerPawnBPClass.Class != nullptr)
+	{
+		DefaultPawnClass = PlayerPawnBPClass.Class;
+	}
+	
 	PlayerControllerClass = AHRPlayerController::StaticClass();		
 	
-
 }

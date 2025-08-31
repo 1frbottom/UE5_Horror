@@ -1,3 +1,0 @@
-Scene_Saloon
-Victorian_House
-SCP_Guard

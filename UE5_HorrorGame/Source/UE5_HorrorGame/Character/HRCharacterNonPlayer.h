@@ -5,21 +5,25 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Interface/HRCharacterAIinterface.h"
+#include "Interface/HRAnimationInterface.h"
 #include "HRCharacterNonPlayer.generated.h"
 
 UCLASS()
-class UE5_HORRORGAME_API AHRCharacterNonPlayer : public ACharacter, public IHRCharacterAIinterface
+class UE5_HORRORGAME_API AHRCharacterNonPlayer : public ACharacter, public IHRCharacterAIinterface, public IHRAnimationInterface
 {
 	GENERATED_BODY()
 
 public:
 	AHRCharacterNonPlayer();
 
+// Mesh
+protected:
+
 // Stat
 	float MaxHp = 1000.0f;
 	float CurrentHp;
 
-	float AttackDamage = 100.0f;
+	float AttackDamage = 30.0f;
 	float AttackRange = 100.0f;
 	float AttackSpeed = 1.0f;
 	float AttackRadius = 50.0f;
@@ -31,29 +35,36 @@ public:
 // Animation 
 protected:
 	
-	// Combo Action Section
+	//// Combo Action Section
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation)
+	//TObjectPtr<class UAnimMontage> ComboActionMontage;
+
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation, Meta = (AllowPrivateAccess = "true"))
+	//TObjectPtr<class UHRComboActionData> ComboActionData; 
+
+	//void ProcessComboCommand();
+	//void ComboActionBegin();
+	//void ComboActionEnd(class UAnimMontage* TargetMontage, bool IsProperlyEnded);
+	//void SetComboCheckTimer();
+	//void ComboCheck();
+
+	//int32 CurrentCombo = 0;
+	//FTimerHandle ComboTimerHandle;
+	//bool HasNextComboCommand = false;
+
+	// Attack Section
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Animation)
-	TObjectPtr<class UAnimMontage> ComboActionMontage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UHRComboActionData> ComboActionData; 
-
-	void ProcessComboCommand();
-	void ComboActionBegin();
-	void ComboActionEnd(class UAnimMontage* TargetMontage, bool IsProperlyEnded);
-	void SetComboCheckTimer();
-	void ComboCheck();
-
-	int32 CurrentCombo = 0;
-	FTimerHandle ComboTimerHandle;
-	bool HasNextComboCommand = false;
+	TObjectPtr<class UAnimMontage> AttackMontage;
+	void PlayAttackMontage();
+	void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
 	// Attack Hit Section
 	void AttackHitCheck();
+	virtual void DoAttackHitCheck_Implementation() override;
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
 	// Dead Section
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Stat, Meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Animation, Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UAnimMontage> DeadMontage;
 
 	void SetDead();
@@ -73,7 +84,7 @@ protected:
 	 virtual void AttackByAI() override;
 
 
-	void NotifycomboActionEnd();
-
+	// void NotifycomboActionEnd();
+	void NotifyAttackEnd();
 
 };
