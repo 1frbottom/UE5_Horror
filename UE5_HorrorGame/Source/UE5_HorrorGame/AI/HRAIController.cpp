@@ -9,17 +9,19 @@
 
 AHRAIController::AHRAIController()
 {
-	static ConstructorHelpers::FObjectFinder<UBlackboardData> BBAssetRef(TEXT("/Script/AIModule.BlackboardData'/Game/Blueprint/Ghost/BB_GhostCharacter.BB_GhostCharacter'"));
+	static ConstructorHelpers::FObjectFinder<UBlackboardData> BBAssetRef(TEXT("/Script/AIModule.BlackboardData'/Game/Blueprint/Ghost/BB_GhostCharacter_Perception.BB_GhostCharacter_Perception'"));
 	if (nullptr != BBAssetRef.Object)
 	{
 		BBasset = BBAssetRef.Object;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UBehaviorTree> BTAssetRef(TEXT("/Script/AIModule.BehaviorTree'/Game/Blueprint/Ghost/BT_GhostCharacter.BT_GhostCharacter'"));
+	static ConstructorHelpers::FObjectFinder<UBehaviorTree> BTAssetRef(TEXT("/Script/AIModule.BehaviorTree'/Game/Blueprint/Ghost/BT_GhostCharacter_Perception.BT_GhostCharacter_Perception'"));
 	if (nullptr != BTAssetRef.Object)
 	{
 		BTasset = BTAssetRef.Object;
 	}
+
+	AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerceptionComponent"));
 
 }
 
