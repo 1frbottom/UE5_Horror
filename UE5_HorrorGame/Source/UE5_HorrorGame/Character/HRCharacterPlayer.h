@@ -8,6 +8,9 @@
 #include "Blueprint/UserWidget.h"
 #include "Miscellaneous/InventoryComponent.h"
 #include "Interface/HRCharacterWidgetInterface.h"
+#include "UI/HRStaminaBarWidget.h"
+#include "UI/HRHpEffectWidget.h"
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
 
 #include "HRCharacterPlayer.generated.h"
 
@@ -73,10 +76,8 @@ public:
 public:
 	//virtual void Tick(float DeltaTime) override;
 
-// Mesh ( test )
+// Mesh
 protected:
-	UPROPERTY(VisibleAnywhere)
-	USkeletalMeshComponent* CharacterMesh;
 
 // Camera
 protected:
@@ -206,25 +207,36 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UHRCharacterStatComponent> Stat;
 
-//public:
-//	UFUNCTION(BlueprintCallable, Category = "Stat")
-//	float GetCurrentHp() const { return CurrentHp; };
-//
-//protected:
-//	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat")
-//	float CurrentHp;
-//
-//	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stat")
-//	float MaxHp;
-//
-//	void SetHp(float NewHp) { CurrentHp = FMath::Clamp<float>(NewHp, 0.0f, MaxHp); };
+	virtual void SetDead();		// 예상 : 델리게이트 터지면 캐릭터 bp에서 카메라, 위젯 처리하도록
+
+	float SprintCost_sec;
+	float JumpStaminaCost;
+	float StaminaRegenRate_sec;
+
+	FTimerHandle StaminaTimerHandle;
+	void UpdateStamina();
+	UFUNCTION()
+	void OnStaminaChanged(float CurrentStamina);
+
+	UFUNCTION()
+	void OnHpChanged(float CurrentHp);
+
+
+public:
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
 // UI widget
-//protected:
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widget", Meta = (AllowPrivateAccess = "true"))
-	//TObjectPtr<class UHRWidgetComponent> HpBar;
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UHRStaminaBarWidget> StaminaBarWidgetClass;
+	UPROPERTY()
+	TObjectPtr<UHRStaminaBarWidget> StaminaBarWidgetInstance;
 
-	//virtual void SetupCharacterWidget(class UHRUserWidget* InUserWidget) override;
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UHRHpEffectWidget> HpEffectWidgetClass;
+	UPROPERTY()
+	TObjectPtr<UHRHpEffectWidget> HpEffectWidgetInstance;
+
 
 // Inventory
 protected:
@@ -312,6 +324,11 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Map")
 	void AcquireMap(EMapType NewMapType);
+
+// AI
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI", meta = (AllowPrivateAccess = "true"))
+	class UAIPerceptionStimuliSourceComponent* StimuliSource;
 
 
 // Miscellaneous
