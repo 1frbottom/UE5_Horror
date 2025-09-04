@@ -17,39 +17,63 @@
 AHRCharacterNonPlayer::AHRCharacterNonPlayer()
 {
 	// Capsule
-	GetCapsuleComponent()->InitCapsuleSize(42.0f, 96.0f);
-	GetCapsuleComponent()->SetCollisionProfileName(TEXT("NpcPawn"));
+		GetCapsuleComponent()->InitCapsuleSize(42.0f, 96.0f);
+		GetCapsuleComponent()->SetCollisionProfileName(TEXT("NpcPawn"));
 
 	// Movement
-	GetCharacterMovement()->MaxAcceleration = 256.0f;
-	//GetCharacterMovement()->bOrientRotationToMovement = true;
-	//GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f);
-	//GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
+		GetCharacterMovement()->MaxAcceleration = 256.0f;
+		//GetCharacterMovement()->bOrientRotationToMovement = true;
+		//GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f);
+		//GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 
 	// Mesh ( test )
-	GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -100.0f), FRotator(0.0f, -90.0f, 0.0f));
-	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
-	GetMesh()->SetCollisionProfileName(TEXT("GhostMesh"));
+		GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -100.0f), FRotator(0.0f, -90.0f, 0.0f));
+		GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+		GetMesh()->SetCollisionProfileName(TEXT("GhostMesh"));
 
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> CharacterMeshRef(TEXT("/Script/Engine.SkeletalMesh'/Game/Asset/NonFab/SecondaryProcessed/Monster/Monster_Tpose_Skeleton.Monster_Tpose_Skeleton'"));
-	if (CharacterMeshRef.Object)
-	{
-		GetMesh()->SetSkeletalMesh(CharacterMeshRef.Object);
-	}
+		static ConstructorHelpers::FObjectFinder<USkeletalMesh> CharacterMeshRef(TEXT("/Script/Engine.SkeletalMesh'/Game/Asset/NonFab/SecondaryProcessed/Monster/Monster_Tpose_Skeleton.Monster_Tpose_Skeleton'"));
+		if (CharacterMeshRef.Object)
+		{
+			GetMesh()->SetSkeletalMesh(CharacterMeshRef.Object);
+		}
 
-	static ConstructorHelpers::FClassFinder<UAnimInstance> AnimInstanceClassRef(TEXT("/Game/Asset/NonFab/SecondaryProcessed/Monster/Animation/ABP_Ghost.ABP_Ghost_C"));
-	if (AnimInstanceClassRef.Class)
-	{
-		GetMesh()->SetAnimInstanceClass(AnimInstanceClassRef.Class);
-	}
+		static ConstructorHelpers::FClassFinder<UAnimInstance> AnimInstanceClassRef(TEXT("/Game/Asset/NonFab/SecondaryProcessed/Monster/Animation/ABP_Ghost.ABP_Ghost_C"));
+		if (AnimInstanceClassRef.Class)
+		{
+			GetMesh()->SetAnimInstanceClass(AnimInstanceClassRef.Class);
+		}
 
 	// Stat
-	CurrentHp = MaxHp;
-	GetCharacterMovement()->MaxWalkSpeed = 400.0f;	// should randomize?
+		CurrentHp = MaxHp;
+		GetCharacterMovement()->MaxWalkSpeed = 400.0f;	// should randomize?
+
+	// Audio
+		HeartBeatSoundComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("HeartBeatSoundComponent"));
+		HeartBeatSoundComponent->SetupAttachment(RootComponent);
+		HeartBeatSoundComponent->bAutoActivate = false;
+
+		GrowlingSoundComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("GrowlingSoundComponent"));
+		GrowlingSoundComponent->SetupAttachment(RootComponent);
+		GrowlingSoundComponent->bAutoActivate = false;
+
 
 	// AI Control
-	//AIControllerClass = AHRAIController::StaticClass();		// designated in BP
-	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+		//AIControllerClass = AHRAIController::StaticClass();		// designated in BP
+		AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+
+}
+
+void AHRCharacterNonPlayer::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// Audio
+		if (HeartBeatSoundComponent && HeartBeatSoundComponent->GetSound())
+		{
+			HeartBeatSoundComponent->Play();
+		}
+
+		PlayGrowlSound();
 
 }
 
@@ -164,6 +188,24 @@ void AHRCharacterNonPlayer::NotifyAttackEnd()
 //	}
 //}
 
+void AHRCharacterNonPlayer::PlayGrowlSound()
+{
+	if (GrowlingSoundComponent && GrowlingSoundComponent->IsValidLowLevel())
+	{
+		GrowlingSoundComponent->Play();
+	}
+
+	float NextGrowlTime = FMath::RandRange(MinGrowlInterval, MaxGrowlInterval);
+
+	GetWorldTimerManager().SetTimer(
+		GrowlTimerHandle,
+		this,
+		&AHRCharacterNonPlayer::PlayGrowlSound,
+		NextGrowlTime,
+		false
+	);
+}
+
 void AHRCharacterNonPlayer::PlayAttackMontage()
 {
 	if (!AttackMontage)
@@ -255,6 +297,10 @@ void AHRCharacterNonPlayer::SetDead()
 	// SetAIController(nullptr);
 	PlayDeadAnimation();
 	GetMesh()->SetCollisionProfileName(TEXT("NoCollision"));
+	if (HeartBeatSoundComponent && HeartBeatSoundComponent->IsPlaying())
+	{
+		HeartBeatSoundComponent->Stop();
+	}
 
 	// AI 정지 로직 추가
 	AHRAIController* AIController = Cast<AHRAIController>(GetController());

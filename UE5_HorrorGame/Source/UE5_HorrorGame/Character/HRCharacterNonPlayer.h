@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "Interface/HRCharacterAIinterface.h"
 #include "Interface/HRAnimationInterface.h"
+#include "Components/AudioComponent.h"
+
 #include "HRCharacterNonPlayer.generated.h"
 
 UCLASS()
@@ -16,10 +18,14 @@ class UE5_HORRORGAME_API AHRCharacterNonPlayer : public ACharacter, public IHRCh
 public:
 	AHRCharacterNonPlayer();
 
+protected:
+	virtual void BeginPlay() override;
+
 // Mesh
 protected:
 
 // Stat
+protected:
 	float MaxHp = 1000.0f;
 	float CurrentHp;
 
@@ -31,6 +37,21 @@ protected:
 	float PatrolRadius = 800.0f;
 	float DetectRange = 400.0f;
 	float TurnSpeed = 2.0f;
+
+// Audio
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UAudioComponent> HeartBeatSoundComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UAudioComponent> GrowlingSoundComponent;
+
+	float MinGrowlInterval = 7.0f;
+	float MaxGrowlInterval = 21.0f;
+
+private:
+	FTimerHandle GrowlTimerHandle;
+	void PlayGrowlSound();
+
 
 // Animation 
 protected:

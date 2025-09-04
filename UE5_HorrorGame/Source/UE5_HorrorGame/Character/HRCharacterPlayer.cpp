@@ -1058,34 +1058,10 @@ void AHRCharacterPlayer::Interact()
 		DrawDebugLine(GetWorld(), start, end, lineColor, false, 2.0f, 0, 1.0f);
 	}
 
-	//// Trace 로직이 모두 사라지고, 이 조건문만 남음
-	//if (FocusedActor) // 타이머가 찾아놓은 액터를 바로 사용
-	//{
-	//	// Item인지 확인
-	//	if (IHRItemInterface* Pickable = Cast<IHRItemInterface>(FocusedActor))
-	//	{
-	//		if (Pickable->IsPickable())
-	//		{
-	//			AddItemToInventory(FocusedActor);
-	//			Pickable->OnPickedUp(this);
-	//		}
-	//	}
-	//	// Item이 아니면 일반 Interactable인지 확인
-	//	else if (IHRInteractableActorInterface* Interactable = Cast<IHRInteractableActorInterface>(FocusedActor))
-	//	{
-	//		if (Interactable->IsInteractable())
-	//		{
-	//			IHRInteractableActorInterface::Execute_BP_Interact(FocusedActor, this);
-	//		}
-	//	}
-	//}
-
 	if (FocusedActor)
 	{
 		if (FocusedActor->GetClass()->ImplementsInterface(UHRInteractableActorInterface::StaticClass()))
 		{
-			// 플레이어는 더 이상 아이템인지, 문인지 구별하지 않습니다.
-			// 그냥 상호작용하라는 신호만 보냅니다.
 			IHRInteractableActorInterface::Execute_BP_Interact(FocusedActor, this);
 		}
 	}
@@ -1164,23 +1140,21 @@ void AHRCharacterPlayer::StopInteractionTrace()
 
 void AHRCharacterPlayer::AttachFlashlight(AHRItemBase* FlashlightToAttach)
 {
-	if (FlashlightToAttach && FlashlightHolder) // FlashlightHolder 사용
+	if (FlashlightToAttach && FlashlightHolder)
 	{
 		EquippedFlashlight = FlashlightToAttach;
 		EquippedFlashlight->AttachToComponent(
-			FlashlightHolder, // FlashlightHolder에 부착
-			FAttachmentTransformRules::SnapToTargetIncludingScale // 위치/회전을 Holder에 맞춤
+			FlashlightHolder, 
+			FAttachmentTransformRules::SnapToTargetIncludingScale 
 		);
 		EquippedFlashlight->SetOwner(this);
 
-		// Holder에 붙였으므로, 손전등 자체의 상대 위치/회전은 (0,0,0)으로 리셋 (선택 사항)
 		EquippedFlashlight->SetActorRelativeLocation(FVector::ZeroVector);
 		EquippedFlashlight->SetActorRelativeRotation(FRotator::ZeroRotator);
 
 		UE_LOG(LogTemp, Log, TEXT("Flashlight attached to FlashlightHolder: %s"), *EquippedFlashlight->GetName());
 
 		EquippedFlashlight->SetActorHiddenInGame(false);
-		// ... (메시 가시성 처리) ...
 	}
 }
 
@@ -1207,11 +1181,8 @@ void AHRCharacterPlayer::ToggleFlashLight()
 
 void AHRCharacterPlayer::AcquireMap(EMapType NewMapType)
 {
-	// OwnedMaps 목록(Set)에 새로운 지도를 추가합니다.
 	OwnedMaps.Add(NewMapType);
 
-	// 만약 플레이어가 이전에 아무 지도도 가지고 있지 않았다면 (처음 지도를 얻는 경우),
-	// 현재 선택된 지도를 방금 얻은 지도로 설정해줍니다.
 	if (CurrentMapType == EMapType::EMT_None)
 	{
 		CurrentMapType = NewMapType;
@@ -1219,7 +1190,6 @@ void AHRCharacterPlayer::AcquireMap(EMapType NewMapType)
 
 	UE_LOG(LogTemp, Warning, TEXT("Map Acquired: %s"), *UEnum::GetValueAsString(NewMapType));
 
-	// 만약 맵 위젯이 열려있는 상태에서 새 지도를 획득했다면, 즉시 업데이트합니다.
 	if (MapWidgetInstance && MapWidgetInstance->IsInViewport())
 	{
 		FOutputDeviceNull n;
@@ -1229,7 +1199,6 @@ void AHRCharacterPlayer::AcquireMap(EMapType NewMapType)
 
 void AHRCharacterPlayer::CycleMap()
 {
-	// 소유한 지도가 하나도 없다면 함수를 즉시 종료합니다.
 	if (OwnedMaps.Num() == 0)
 	{
 		CurrentMapType = EMapType::EMT_None;
@@ -1237,28 +1206,24 @@ void AHRCharacterPlayer::CycleMap()
 		return;
 	}
 
-	// TSet을 TArray로 변환해야 순서대로 접근할 수 있습니다.
 	TArray<EMapType> OwnedMapsArray = OwnedMaps.Array();
-	// Enum 순서대로 정렬하여 일관된 순서를 보장합니다.
+
 	OwnedMapsArray.Sort();
 
-	// 현재 선택된 지도의 인덱스를 찾습니다.
 	int32 CurrentIndex = OwnedMapsArray.Find(CurrentMapType);
 
-	// 현재 선택된 맵이 없거나 목록에 없으면(INDEX_NONE), 그냥 첫 번째 소유 지도로 설정합니다.
 	if (CurrentIndex == INDEX_NONE)
 	{
 		CurrentMapType = OwnedMapsArray[0];
 	}
 	else
 	{
-		// 다음 인덱스로 이동합니다.
 		CurrentIndex++;
-		// 만약 인덱스가 배열의 끝을 넘어가면, 다시 0번으로 (처음으로) 돌아갑니다.
 		if (CurrentIndex >= OwnedMapsArray.Num())
 		{
 			CurrentIndex = 0;
 		}
+
 		CurrentMapType = OwnedMapsArray[CurrentIndex];
 	}
 
