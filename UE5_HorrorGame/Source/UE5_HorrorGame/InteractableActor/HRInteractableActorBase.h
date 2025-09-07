@@ -35,18 +35,21 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh")
 	TObjectPtr<UStaticMeshComponent> Mesh2;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction UI")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
 	UWidgetComponent* InteractionPromptWidget;		// 액터의 컴포넌트로 들어가는거라 액터와 동시생성
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USceneComponent> InteractionWidgetAnchor;	// 모듈화 : 위젯컴포넌트 담을 앵커
 
 	// do hardcoding within each BP
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction UI")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
 	FText InteractionText;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction UI")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
 	UBoxComponent* InteractionBox;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
+	TObjectPtr<UBoxComponent> TraceHitBox;
 
 	UFUNCTION()
 	void OnInteractionBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);

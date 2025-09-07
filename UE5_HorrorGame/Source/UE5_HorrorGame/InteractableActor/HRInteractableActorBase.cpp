@@ -14,22 +14,26 @@ AHRInteractableActorBase::AHRInteractableActorBase()
     RootComponent = DefaultSceneRoot;
 
     // Static Mesh
-    Mesh1 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh1"));
-    Mesh1->SetupAttachment(RootComponent);
-    Mesh1->SetCollisionProfileName(TEXT("InteractableActorBase_Mesh"));
+        Mesh1 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh1"));
+        Mesh1->SetupAttachment(RootComponent);
 
-    Mesh2 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh2"));
-    Mesh2->SetupAttachment(RootComponent);
-    Mesh2->SetCollisionProfileName(TEXT("InteractableActorBase_Mesh"));
-    Mesh2->SetRelativeLocation(FVector(0.f, 100.f, 0.f));
+        Mesh2 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh2"));
+        Mesh2->SetupAttachment(RootComponent);
+        Mesh2->SetRelativeLocation(FVector(0.f, 100.f, 0.f));
 
     // box collision component
-    InteractionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionBox"));
-    InteractionBox->SetupAttachment(RootComponent);
-    InteractionBox->SetCollisionProfileName(TEXT("InteractableActorBase_Box"));
+        InteractionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionBox"));
+        InteractionBox->SetupAttachment(RootComponent);
+        InteractionBox->SetCollisionProfileName(TEXT("InteractableActorBase_Box"));
 
-    InteractionBox->OnComponentBeginOverlap.AddDynamic(this, &AHRInteractableActorBase::OnInteractionBoxBeginOverlap);
-    InteractionBox->OnComponentEndOverlap.AddDynamic(this, &AHRInteractableActorBase::OnInteractionBoxEndOverlap);
+        InteractionBox->OnComponentBeginOverlap.AddDynamic(this, &AHRInteractableActorBase::OnInteractionBoxBeginOverlap);
+        InteractionBox->OnComponentEndOverlap.AddDynamic(this, &AHRInteractableActorBase::OnInteractionBoxEndOverlap);
+
+	// trace hit box
+        TraceHitBox = CreateDefaultSubobject<UBoxComponent>(TEXT("TraceHitBox"));
+        TraceHitBox->SetupAttachment(RootComponent);
+        TraceHitBox->InitBoxExtent(FVector(20.f));
+        TraceHitBox->SetCollisionProfileName(TEXT("InteractableActorBase_TraceHitBox"));
 
     // anchor component
     InteractionWidgetAnchor = CreateDefaultSubobject<USceneComponent>(TEXT("InteractionWidgetAnchor"));
