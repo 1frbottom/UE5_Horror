@@ -760,8 +760,8 @@ void AHRCharacterPlayer::StopSprint()
 
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 
-	// ½ºÅÂ¹Ì³ª Å¸ÀÌ¸Ó¸¦ ½ÃÀÛ/Àç½ÃÀÛÇÏ¿© Àç»ý ·ÎÁ÷À» Å¸µµ·Ï ÇÔ
-	// ÀÌ¹Ì Å¸ÀÌ¸Ó°¡ ½ÇÇà Áß(¼Ò¸ð Áß)ÀÌ¾îµµ SetTimer´Â Å¸ÀÌ¸Ó¸¦ ¸®¼ÂÇÏ°í »õ·Î ½ÃÀÛÇÔ
+	// ï¿½ï¿½ï¿½Â¹Ì³ï¿½ Å¸ï¿½Ì¸Ó¸ï¿½ ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
+	// ï¿½Ì¹ï¿½ Å¸ï¿½Ì¸Ó°ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½(ï¿½Ò¸ï¿½ ï¿½ï¿½)ï¿½Ì¾îµµ SetTimerï¿½ï¿½ Å¸ï¿½Ì¸Ó¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	GetWorld()->GetTimerManager().SetTimer(
 		StaminaTimerHandle,
 		this,
@@ -825,7 +825,7 @@ void AHRCharacterPlayer::ShoulderViewLook(const FInputActionValue& Value)
 
 void AHRCharacterPlayer::QuarterViewMove(const FInputActionValue& Value)
 {
-	// ¿øº»ÄÚµå, ¿ÞÂÊÀÌ Á¤¸éÀÎ°ÍÃ³·³ Çàµ¿
+	// ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½, ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Î°ï¿½Ã³ï¿½ï¿½ ï¿½àµ¿
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
 	float InputSizeSquared = MovementVector.SquaredLength();
@@ -845,66 +845,66 @@ void AHRCharacterPlayer::QuarterViewMove(const FInputActionValue& Value)
 	GetController()->SetControlRotation(FRotationMatrix::MakeFromX(MoveDirection).Rotator());
 	AddMovementInput(MoveDirection, MovementVectorSize);
 	
-	//// ´ë¾È1, ¸Þ½¬ È¸Àü º¸°£ÇÔ¼ö ÇÊ¿ä
+	//// ï¿½ï¿½ï¿½1, ï¿½Þ½ï¿½ È¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ô¼ï¿½ ï¿½Ê¿ï¿½
 	//FVector2D MovementVector = Value.Get<FVector2D>();
 
-	//	// ÀÔ·Â º¤ÅÍ Å©±â Á¶Àý (´ë°¢¼± ÀÌµ¿ ¼Óµµ º¸Á¤)
+	//	// ï¿½Ô·ï¿½ ï¿½ï¿½ï¿½ï¿½ Å©ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ë°¢ï¿½ï¿½ ï¿½Ìµï¿½ ï¿½Óµï¿½ ï¿½ï¿½ï¿½ï¿½)
 	//if (MovementVector.SquaredLength() > 1.0f)
 	//{
 	//	MovementVector.Normalize();
 	//}
 
-	//	// Ä³¸¯ÅÍ°¡ ¹Ù¶óº¸´Â ¹æÇâÀ» ±âÁØÀ¸·Î ÀÌµ¿ ¹æÇâ °è»ê
-	//FRotator CameraRotation = Camera_Quarter->GetComponentRotation(); // ÄõÅÍºä Ä«¸Þ¶óÀÇ È¸Àü
-	//FRotator YawRotation(0, CameraRotation.Yaw, 0); // Yaw È¸Àü¸¸ ÃßÃâ
-	//FVector MoveDirection = FRotationMatrix(YawRotation).GetScaledAxis(EAxis::X) * MovementVector.X + FRotationMatrix(YawRotation).GetScaledAxis(EAxis::Y) * MovementVector.Y; // forward, right vector¸¦ ÀÌ¿ëÇÏ¿© ¹æÇâÀ» ±¸ÇÔ.
+	//	// Ä³ï¿½ï¿½ï¿½Í°ï¿½ ï¿½Ù¶óº¸´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
+	//FRotator CameraRotation = Camera_Quarter->GetComponentRotation(); // ï¿½ï¿½ï¿½Íºï¿½ Ä«ï¿½Þ¶ï¿½ï¿½ï¿½ È¸ï¿½ï¿½
+	//FRotator YawRotation(0, CameraRotation.Yaw, 0); // Yaw È¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	//FVector MoveDirection = FRotationMatrix(YawRotation).GetScaledAxis(EAxis::X) * MovementVector.X + FRotationMatrix(YawRotation).GetScaledAxis(EAxis::Y) * MovementVector.Y; // forward, right vectorï¿½ï¿½ ï¿½Ì¿ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 
 	//AddMovementInput(MoveDirection, 1.0f);
 
-	//// ÀÌµ¿ ¹æÇâÀÌ ÀÖÀ¸¸é ¸Þ½¬ È¸Àü Àû¿ë (90µµ º¸Á¤)
+	//// ï¿½Ìµï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ È¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (90ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 	//if (!MoveDirection.IsNearlyZero())
 	//{
 	//	FRotator TargetRotation = MoveDirection.Rotation();
-	//	TargetRotation.Yaw -= 90.0f; // ±âº» È¸Àü°ª º¸Á¤
+	//	TargetRotation.Yaw -= 90.0f; // ï¿½âº» È¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
 	//	GetMesh()->SetWorldRotation(TargetRotation);
 	//}
 }
 
-//// ´ë¾È2, fpvÀÇ È¸ÀüÀÌ ±×´ë·Î º¸ÀüµÇ¾î ´ÙÀ½ »çÀÌÅ¬¿¡µµ ³ª¿À´Â ¹ö±×
+//// ï¿½ï¿½ï¿½2, fpvï¿½ï¿½ È¸ï¿½ï¿½ï¿½ï¿½ ï¿½×´ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ç¾ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 //void AHRCharacterPlayer::QuarterViewMove(const FInputActionValue& Value)
 //{
 //	FVector2D MovementVector = Value.Get<FVector2D>();
 //
-//	// ÀÔ·Â º¤ÅÍ Å©±â Á¶Àý (´ë°¢¼± ÀÌµ¿ ¼Óµµ º¸Á¤)
+//	// ï¿½Ô·ï¿½ ï¿½ï¿½ï¿½ï¿½ Å©ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ë°¢ï¿½ï¿½ ï¿½Ìµï¿½ ï¿½Óµï¿½ ï¿½ï¿½ï¿½ï¿½)
 //	if (MovementVector.SquaredLength() > 1.0f)
 //	{
 //		MovementVector.Normalize();
 //	}
 //
-//	// ÄõÅÍºä Ä«¸Þ¶óÀÇ È¸Àü °ª °¡Á®¿À±â
+//	// ï¿½ï¿½ï¿½Íºï¿½ Ä«ï¿½Þ¶ï¿½ï¿½ï¿½ È¸ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 //	FRotator CameraRotation = Camera_Quarter->GetComponentRotation();
 //	FRotator YawRotation(0, CameraRotation.Yaw, 0);
 //
-//	// Ä«¸Þ¶ó Yaw È¸Àü °ªÀ» ±âÁØÀ¸·Î ÀÌµ¿ ¹æÇâ º¤ÅÍ °è»ê
+//	// Ä«ï¿½Þ¶ï¿½ Yaw È¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
 //	FVector MoveDirection = FRotationMatrix(YawRotation).GetScaledAxis(EAxis::X) * MovementVector.X + FRotationMatrix(YawRotation).GetScaledAxis(EAxis::Y) * MovementVector.Y;
 //
-//	// ÀÌµ¿ ¹æÇâÀ¸·Î Ä³¸¯ÅÍ ÀÌµ¿
+//	// ï¿½Ìµï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½
 //	AddMovementInput(MoveDirection, 1.0f);
 //
 //
-//	// ÀÌµ¿ ¹æÇâÀÌ ÀÖÀ» ¶§¸¸ ¸Þ½¬ È¸Àü Àû¿ë
+//	// ï¿½Ìµï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ È¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 //	if (!MoveDirection.IsNearlyZero())
 //	{
-//		// ÀÌµ¿ ¹æÇâ °¢µµ °è»ê
+//		// ï¿½Ìµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
 //		FRotator TargetRotation = MoveDirection.Rotation();
 //
-//		// ¸Þ½¬ È¸Àü ½Ã 90µµ ¿ÀÇÁ¼Â º¸Á¤ (¸Þ½¬ÀÇ ÃÊ±â ¹æÇâ¿¡ µû¶ó Á¶Àý)
+//		// ï¿½Þ½ï¿½ È¸ï¿½ï¿½ ï¿½ï¿½ 90ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½Þ½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½ ï¿½ï¿½ï¿½â¿¡ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 //		TargetRotation.Yaw -= 90.0f;
 //
-//		// ºÎµå·¯¿î È¸ÀüÀ» À§ÇØ RInterp To »ç¿ë (¼±ÅÃÀû)
+//		// ï¿½Îµå·¯ï¿½ï¿½ È¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ RInterp To ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)
 //		FRotator CurrentRotation = GetMesh()->GetComponentRotation();
-//		FRotator InterpolatedRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, GetWorld()->GetDeltaSeconds(), 10.0f); // 10.0fÀº º¸°£ ¼Óµµ
+//		FRotator InterpolatedRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, GetWorld()->GetDeltaSeconds(), 10.0f); // 10.0fï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Óµï¿½
 //
 //		GetMesh()->SetWorldRotation(InterpolatedRotation);
 //	}
@@ -936,14 +936,14 @@ void AHRCharacterPlayer::TraceInteractable()
 	// debug ~
 	if (bHit)
 	{
-		// LineTrace¿¡ ¸ÂÀº ¾×ÅÍ¿Í ÄÄÆ÷³ÍÆ®ÀÇ ÀÌ¸§À» ·Î±×·Î Ãâ·Â
+		// LineTraceï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Í¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½Ì¸ï¿½ï¿½ï¿½ ï¿½Î±×·ï¿½ ï¿½ï¿½ï¿½
 		UE_LOG(LogTemp, Warning, TEXT("LineTrace HIT --- Actor: [%s], Component: [%s]"),
 			*hitResult.GetActor()->GetName(),
 			*hitResult.GetComponent()->GetName());
 	}
 	else
 	{
-		// ¾Æ¹«°Íµµ ¸ÂÁö ¾Ê¾ÒÀ» ¶§ ·Î±× Ãâ·Â
+		// ï¿½Æ¹ï¿½ï¿½Íµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¾ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Î±ï¿½ ï¿½ï¿½ï¿½
 		UE_LOG(LogTemp, Warning, TEXT("LineTrace HIT --- NOTHING"));
 	}
 	// ~ debug
@@ -972,7 +972,7 @@ void AHRCharacterPlayer::TraceInteractable()
 
 	if (FoundInteractable == nullptr)
 	{
-		// ÀÌÀü¿¡ Æ÷Ä¿½ºµÈ ¾×ÅÍ°¡ ÀÖ¾ú´Ù¸é Æ÷Ä¿½º¸¦ ÀÒ°Ô ÇÔ
+		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Í°ï¿½ ï¿½Ö¾ï¿½ï¿½Ù¸ï¿½ ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½ï¿½ ï¿½Ò°ï¿½ ï¿½ï¿½
 		if (IsValid(FocusedActor))
 		{
 			FocusedActor->OnFocusLost();
@@ -1109,7 +1109,7 @@ void AHRCharacterPlayer::AddItemToInventory(AActor* InItem)
 
 		if (InventoryWidgetInstance)
 		{
-			// ºí·çÇÁ¸°Æ®¿¡ ÀÖ´Â UpdateInventoryUI ÇÔ¼ö È£Ãâ
+			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½Ö´ï¿½ UpdateInventoryUI ï¿½Ô¼ï¿½ È£ï¿½ï¿½
 			FOutputDeviceNull n;
 			InventoryWidgetInstance->CallFunctionByNameWithArguments
 			(TEXT("UpdateInventoryUI"), n, nullptr, true);
