@@ -29,7 +29,7 @@ protected:
 	float MaxHp = 1000.0f;
 	float CurrentHp;
 
-	float AttackDamage = 30.0f;
+	float AttackDamage = 150.0f;
 	float AttackRange = 100.0f;
 	float AttackSpeed = 1.0f;
 	float AttackRadius = 50.0f;

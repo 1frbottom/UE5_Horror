@@ -371,17 +371,16 @@ void AHRCharacterPlayer::PostInitializeComponents()
 
 void AHRCharacterPlayer::SetDead()
 {
-	APlayerController* pc = Cast<AHRPlayerController>(GetController());
-	if (pc)
-	{
-		DisableInput(pc);
-	}
+	//APlayerController* pc = Cast<AHRPlayerController>(GetController());
+	//if (pc)
+	//{
+	//	DisableInput(pc);
+	//}
 
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
-
-	// TODO : add dead montage
-
 	SetActorEnableCollision(false);
+	
+	// add dead montage?
 
 	if (IsValid(StaminaBarWidgetInstance))
 	{
@@ -393,9 +392,7 @@ void AHRCharacterPlayer::SetDead()
 		HpEffectWidgetInstance->UpdateHpEffect(1.0f);
 	}
 
-	// TODO : add dead UI
-
-	// TODO : restart Level
+	OnPlayerDied.Broadcast();
 }
 
 // called by every 0.1 sec
