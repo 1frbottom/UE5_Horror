@@ -25,4 +25,23 @@ protected:
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
 	UHRUIManagerComponent* UIManager;
+	
+// SetDead Delegate
+protected:
+	virtual void OnPossess(APawn* InPawn) override;
+
+	UFUNCTION()
+	void HandlePlayerDied();
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GameOver")
+	TSubclassOf<class UUserWidget> GameOverWidgetClass;
+	
+	UFUNCTION(BlueprintCallable, Category = "GameOver")
+	void RetryLevel();
+
+	UPROPERTY(EditDefaultsOnly, Category = "GameOver")
+	float RestartDelay = 5.0f;
+
+private:
+	FTimerHandle RestartTimerHandle;
 };

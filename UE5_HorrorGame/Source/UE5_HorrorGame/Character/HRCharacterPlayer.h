@@ -14,7 +14,10 @@
 
 #include "HRCharacterPlayer.generated.h"
 
+
 #define ECC_Interactable ECollisionChannel::ECC_GameTraceChannel1	// Interaction
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerDiedSignature);
 
 class USpringArmComponent;
 class UCameraComponent;
@@ -54,6 +57,8 @@ enum class EMapType : uint8
 
 	EMT_MAX UMETA(Hidden) // Enum 개수 확인용 (항상 마지막에 위치)
 };
+
+
 
 UCLASS()
 class UE5_HORRORGAME_API AHRCharacterPlayer : public ACharacter/*, public IHRCharacterWidgetInterface*/
@@ -207,23 +212,35 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stat", Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UHRCharacterStatComponent> Stat;
 
+	// Hp
 	virtual void SetDead();		// 예상 : 델리게이트 터지면 캐릭터 bp에서 카메라, 위젯 처리하도록
-
-	float SprintCost_sec;
-	float JumpStaminaCost;
-	float StaminaRegenRate_sec;
-
-	FTimerHandle StaminaTimerHandle;
-	void UpdateStamina();
-	UFUNCTION()
-	void OnStaminaChanged(float CurrentStamina);
 
 	UFUNCTION()
 	void OnHpChanged(float CurrentHp);
 
-
-public:
+	public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+
+	FOnPlayerDiedSignature OnPlayerDied;
+
+	// Stamina
+	protected:
+		float SprintCost_sec;
+		float JumpStaminaCost;
+		float StaminaRegenRate_sec;
+
+		void UpdateStamina();
+		void HideStaminaBar();
+
+	private:
+		FTimerHandle StaminaTimerHandle;
+	
+		UFUNCTION()
+		void OnStaminaChanged(float CurrentStamina);
+
+		FTimerHandle StaminaUIVisibilityTimerHandle;
+		UPROPERTY(EditAnywhere, Category = "UI", meta = (AllowPrivateAccess = "true"))
+		float StaminaUIVisibilityDelay = 1.0f;
 
 // UI widget
 protected:
