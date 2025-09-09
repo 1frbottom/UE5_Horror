@@ -14,7 +14,10 @@
 
 #include "HRCharacterPlayer.generated.h"
 
+
 #define ECC_Interactable ECollisionChannel::ECC_GameTraceChannel1	// Interaction
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerDiedSignature);
 
 class USpringArmComponent;
 class UCameraComponent;
@@ -54,6 +57,8 @@ enum class EMapType : uint8
 
 	EMT_MAX UMETA(Hidden) // Enum 개수 확인용 (항상 마지막에 위치)
 };
+
+
 
 UCLASS()
 class UE5_HORRORGAME_API AHRCharacterPlayer : public ACharacter/*, public IHRCharacterWidgetInterface*/
@@ -215,6 +220,8 @@ protected:
 
 	public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+
+	FOnPlayerDiedSignature OnPlayerDied;
 
 	// Stamina
 	protected:
