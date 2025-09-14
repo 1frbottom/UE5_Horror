@@ -61,9 +61,8 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 	GetCharacterMovement()->CrouchedHalfHeight = 50.0f;
 	GetCharacterMovement()->MaxWalkSpeedCrouched = 100.0f;
 
-
-	WalkSpeed = 200.0f;
-	SprintSpeed = 1000.0f;
+	WalkSpeed = 150.0f;
+	SprintSpeed = 250.0f;
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.0f;
 
@@ -146,25 +145,25 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 	UIManager = CreateDefaultSubobject<UHRUIManagerComponent>(TEXT("UIManager"));
 
 	// Input
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputChangeActionControlRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_ChangeControl.IA_ChangeControl'"));
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputChangeActionControlRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/CharacterAction/IA_ChangeControl.IA_ChangeControl'"));
 	if (nullptr != InputChangeActionControlRef.Object)
 	{
 		ChangeControlAction = InputChangeActionControlRef.Object;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionJumpRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_Jump.IA_Jump'"));
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionJumpRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/CharacterAction/IA_Jump.IA_Jump'"));
 	if (nullptr != InputActionJumpRef.Object)
 	{
 		JumpAction = InputActionJumpRef.Object;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionCrouchRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_Crouch.IA_Crouch'"));
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionCrouchRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/CharacterAction/IA_Crouch.IA_Crouch'"));
 	if (nullptr != InputActionCrouchRef.Object)
 	{
 		CrouchAction = InputActionCrouchRef.Object;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionSprintRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_Sprint.IA_Sprint'"));
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionSprintRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/CharacterAction/IA_Sprint.IA_Sprint'"));
 	if (nullptr != InputActionSprintRef.Object)
 	{
 		SprintAction = InputActionSprintRef.Object;
@@ -172,29 +171,29 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 
 		// view
 			// FPV
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionFpvMoveRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_FirstPersonViewMove.IA_FirstPersonViewMove'"));
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionFpvMoveRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/CharacterAction/IA_FirstPersonViewMove.IA_FirstPersonViewMove'"));
 	if (nullptr != InputActionFpvMoveRef.Object)
 	{
 		FirstPersonViewMoveAction = InputActionFpvMoveRef.Object;
 	}
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionFpvLookRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_FirstPersonViewLook.IA_FirstPersonViewLook'"));
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionFpvLookRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/CharacterAction/IA_FirstPersonViewLook.IA_FirstPersonViewLook'"));
 	if (nullptr != InputActionFpvLookRef.Object)
 	{
 		FirstPersonViewLookAction = InputActionFpvLookRef.Object;
 	}
 			// Shoulder
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionShMoveRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_ShoulderViewMove.IA_ShoulderViewMove'"));
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionShMoveRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/CharacterAction/IA_ShoulderViewMove.IA_ShoulderViewMove'"));
 	if (nullptr != InputActionShMoveRef.Object)
 	{
 		ShoulderViewMoveAction = InputActionShMoveRef.Object;
 	}
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionShLookRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_ShoulderViewLook.IA_ShoulderViewLook'"));
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionShLookRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/CharacterAction/IA_ShoulderViewLook.IA_ShoulderViewLook'"));
 	if (nullptr != InputActionShLookRef.Object)
 	{
 		ShoulderViewLookAction = InputActionShLookRef.Object;
 	}
 			// Quarter
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionQaMoveRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_QuarterViewMove.IA_QuarterViewMove'"));
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionQaMoveRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/CharacterAction/IA_QuarterViewMove.IA_QuarterViewMove'"));
 	if (nullptr != InputActionQaMoveRef.Object)
 	{
 		QuarterViewMoveAction = InputActionQaMoveRef.Object;
@@ -218,34 +217,34 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 	}
 
 		// interact
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionInteractRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_Interact.IA_Interact'"));
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionInteractRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/CharacterAction/IA_Interact.IA_Interact'"));
 	if (nullptr != InputActionInteractRef.Object)
 	{
 		InteractAction = InputActionInteractRef.Object;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionToggleInventoryRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_ToggleInventory.IA_ToggleInventory'"));
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionToggleInventoryRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/CharacterAction/IA_ToggleInventory.IA_ToggleInventory'"));
 	if (nullptr != InputActionToggleInventoryRef.Object)
 	{
 		ToggleInventoryAction = InputActionToggleInventoryRef.Object;
 	}
 		
 		// ToggleFlashlight
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionToggleFlashLightRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_ToggleFlashLight.IA_ToggleFlashLight'"));
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionToggleFlashLightRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/CharacterAction/IA_ToggleFlashLight.IA_ToggleFlashLight'"));
 	if (nullptr != InputActionToggleFlashLightRef.Object)
 	{
 		ToggleFlashlightAction = InputActionToggleFlashLightRef.Object;
 	}
 		
 		// ToggleMap
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionToggleMapRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_ToggleMap.IA_ToggleMap'"));
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionToggleMapRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/CharacterAction/IA_ToggleMap.IA_ToggleMap'"));
 	if (nullptr != InputActionToggleMapRef.Object)
 	{
 		ToggleMapAction = InputActionToggleMapRef.Object;
 	}
 
 		// CycleMap
-	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionCycleMapRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/Action/IA_CycleMap.IA_CycleMap'"));
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionCycleMapRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/CharacterAction/IA_CycleMap.IA_CycleMap'"));
 	if (nullptr != InputActionCycleMapRef.Object)
 	{
 		CycleMapAction = InputActionCycleMapRef.Object;
@@ -601,7 +600,12 @@ void AHRCharacterPlayer::SetCharacterControl(ECharacterControlType NewCharacterC
 	// Bring local(client) player's subsystem(which manages enhanced-input on a local player unit)
 	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 	{
-		Subsystem->ClearAllMappings();
+		// Subsystem->ClearAllMappings();
+
+		if (IsValid(CurrentCharacterIMC))
+		{
+			Subsystem->RemoveMappingContext(CurrentCharacterIMC);
+		}
 
 		UInputMappingContext* NewMappingContext = NewCharacterControl->InputMappingContext;
 		if (NewMappingContext)
@@ -609,6 +613,9 @@ void AHRCharacterPlayer::SetCharacterControl(ECharacterControlType NewCharacterC
 			Subsystem->AddMappingContext(NewMappingContext, 0);		// 0 : priority
 
 			//Subsystem->RemoveMappingContext(DefaultMappingContext);	// modifiable during runtime : remove default IMC -> add another IMC
+	
+			CurrentCharacterIMC = NewMappingContext;
+
 		}
 	}
 
@@ -757,8 +764,8 @@ void AHRCharacterPlayer::StopSprint()
 
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 
-	// ���¹̳� Ÿ�̸Ӹ� ����/������Ͽ� ��� ������ Ÿ���� ��
-	// �̹� Ÿ�̸Ӱ� ���� ��(�Ҹ� ��)�̾ SetTimer�� Ÿ�̸Ӹ� �����ϰ� ���� ������
+	// 스태미나 타이머를 시작/재시작하여 재생 로직을 타도록 함
+	// 이미 타이머가 실행 중(소모 중)이어도 SetTimer는 타이머를 리셋하고 새로 시작함
 	GetWorld()->GetTimerManager().SetTimer(
 		StaminaTimerHandle,
 		this,
@@ -822,7 +829,7 @@ void AHRCharacterPlayer::ShoulderViewLook(const FInputActionValue& Value)
 
 void AHRCharacterPlayer::QuarterViewMove(const FInputActionValue& Value)
 {
-	// �����ڵ�, ������ �����ΰ�ó�� �ൿ
+	// 원본코드, 왼쪽이 정면인것처럼 행동
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
 	float InputSizeSquared = MovementVector.SquaredLength();
@@ -842,66 +849,66 @@ void AHRCharacterPlayer::QuarterViewMove(const FInputActionValue& Value)
 	GetController()->SetControlRotation(FRotationMatrix::MakeFromX(MoveDirection).Rotator());
 	AddMovementInput(MoveDirection, MovementVectorSize);
 	
-	//// ���1, �޽� ȸ�� �����Լ� �ʿ�
+	//// 대안1, 메쉬 회전 보간함수 필요
 	//FVector2D MovementVector = Value.Get<FVector2D>();
 
-	//	// �Է� ���� ũ�� ���� (�밢�� �̵� �ӵ� ����)
+	//	// 입력 벡터 크기 조절 (대각선 이동 속도 보정)
 	//if (MovementVector.SquaredLength() > 1.0f)
 	//{
 	//	MovementVector.Normalize();
 	//}
 
-	//	// ĳ���Ͱ� �ٶ󺸴� ������ �������� �̵� ���� ���
-	//FRotator CameraRotation = Camera_Quarter->GetComponentRotation(); // ���ͺ� ī�޶��� ȸ��
-	//FRotator YawRotation(0, CameraRotation.Yaw, 0); // Yaw ȸ���� ����
-	//FVector MoveDirection = FRotationMatrix(YawRotation).GetScaledAxis(EAxis::X) * MovementVector.X + FRotationMatrix(YawRotation).GetScaledAxis(EAxis::Y) * MovementVector.Y; // forward, right vector�� �̿��Ͽ� ������ ����.
+	//	// 캐릭터가 바라보는 방향을 기준으로 이동 방향 계산
+	//FRotator CameraRotation = Camera_Quarter->GetComponentRotation(); // 쿼터뷰 카메라의 회전
+	//FRotator YawRotation(0, CameraRotation.Yaw, 0); // Yaw 회전만 추출
+	//FVector MoveDirection = FRotationMatrix(YawRotation).GetScaledAxis(EAxis::X) * MovementVector.X + FRotationMatrix(YawRotation).GetScaledAxis(EAxis::Y) * MovementVector.Y; // forward, right vector를 이용하여 방향을 구함.
 
 	//AddMovementInput(MoveDirection, 1.0f);
 
-	//// �̵� ������ ������ �޽� ȸ�� ���� (90�� ����)
+	//// 이동 방향이 있으면 메쉬 회전 적용 (90도 보정)
 	//if (!MoveDirection.IsNearlyZero())
 	//{
 	//	FRotator TargetRotation = MoveDirection.Rotation();
-	//	TargetRotation.Yaw -= 90.0f; // �⺻ ȸ���� ����
+	//	TargetRotation.Yaw -= 90.0f; // 기본 회전값 보정
 
 	//	GetMesh()->SetWorldRotation(TargetRotation);
 	//}
 }
 
-//// ���2, fpv�� ȸ���� �״�� �����Ǿ� ���� ����Ŭ���� ������ ����
+//// 대안2, fpv의 회전이 그대로 보전되어 다음 사이클에도 나오는 버그
 //void AHRCharacterPlayer::QuarterViewMove(const FInputActionValue& Value)
 //{
 //	FVector2D MovementVector = Value.Get<FVector2D>();
 //
-//	// �Է� ���� ũ�� ���� (�밢�� �̵� �ӵ� ����)
+//	// 입력 벡터 크기 조절 (대각선 이동 속도 보정)
 //	if (MovementVector.SquaredLength() > 1.0f)
 //	{
 //		MovementVector.Normalize();
 //	}
 //
-//	// ���ͺ� ī�޶��� ȸ�� �� ��������
+//	// 쿼터뷰 카메라의 회전 값 가져오기
 //	FRotator CameraRotation = Camera_Quarter->GetComponentRotation();
 //	FRotator YawRotation(0, CameraRotation.Yaw, 0);
 //
-//	// ī�޶� Yaw ȸ�� ���� �������� �̵� ���� ���� ���
+//	// 카메라 Yaw 회전 값을 기준으로 이동 방향 벡터 계산
 //	FVector MoveDirection = FRotationMatrix(YawRotation).GetScaledAxis(EAxis::X) * MovementVector.X + FRotationMatrix(YawRotation).GetScaledAxis(EAxis::Y) * MovementVector.Y;
 //
-//	// �̵� �������� ĳ���� �̵�
+//	// 이동 방향으로 캐릭터 이동
 //	AddMovementInput(MoveDirection, 1.0f);
 //
 //
-//	// �̵� ������ ���� ���� �޽� ȸ�� ����
+//	// 이동 방향이 있을 때만 메쉬 회전 적용
 //	if (!MoveDirection.IsNearlyZero())
 //	{
-//		// �̵� ���� ���� ���
+//		// 이동 방향 각도 계산
 //		FRotator TargetRotation = MoveDirection.Rotation();
 //
-//		// �޽� ȸ�� �� 90�� ������ ���� (�޽��� �ʱ� ���⿡ ���� ����)
+//		// 메쉬 회전 시 90도 오프셋 보정 (메쉬의 초기 방향에 따라 조절)
 //		TargetRotation.Yaw -= 90.0f;
 //
-//		// �ε巯�� ȸ���� ���� RInterp To ��� (������)
+//		// 부드러운 회전을 위해 RInterp To 사용 (선택적)
 //		FRotator CurrentRotation = GetMesh()->GetComponentRotation();
-//		FRotator InterpolatedRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, GetWorld()->GetDeltaSeconds(), 10.0f); // 10.0f�� ���� �ӵ�
+//		FRotator InterpolatedRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, GetWorld()->GetDeltaSeconds(), 10.0f); // 10.0f은 보간 속도
 //
 //		GetMesh()->SetWorldRotation(InterpolatedRotation);
 //	}
@@ -933,14 +940,12 @@ void AHRCharacterPlayer::TraceInteractable()
 	// debug ~
 	if (bHit)
 	{
-		// LineTrace�� ���� ���Ϳ� ������Ʈ�� �̸��� �α׷� ���
 		UE_LOG(LogTemp, Warning, TEXT("LineTrace HIT --- Actor: [%s], Component: [%s]"),
 			*hitResult.GetActor()->GetName(),
 			*hitResult.GetComponent()->GetName());
 	}
 	else
 	{
-		// �ƹ��͵� ���� �ʾ��� �� �α� ���
 		UE_LOG(LogTemp, Warning, TEXT("LineTrace HIT --- NOTHING"));
 	}
 	// ~ debug
@@ -969,7 +974,7 @@ void AHRCharacterPlayer::TraceInteractable()
 
 	if (FoundInteractable == nullptr)
 	{
-		// ������ ��Ŀ���� ���Ͱ� �־��ٸ� ��Ŀ���� �Ұ� ��
+		// 이전에 포커스된 액터가 있었다면 포커스를 잃게 함
 		if (IsValid(FocusedActor))
 		{
 			FocusedActor->OnFocusLost();

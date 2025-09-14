@@ -7,6 +7,8 @@
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
 
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
 
 
 AHRPlayerController::AHRPlayerController()
@@ -14,14 +16,36 @@ AHRPlayerController::AHRPlayerController()
 	// UI Manager
 	UIManager = CreateDefaultSubobject<UHRUIManagerComponent>(TEXT("UIManager"));
 
+	static ConstructorHelpers::FObjectFinder<UInputAction> PauseActionRef(TEXT("/Script/EnhancedInput.InputAction'/Game/Input/SystemAction/IA_PauseGame.IA_PauseGame'"));
+	if (PauseActionRef.Object)
+	{
+		TogglePauseGameAction = PauseActionRef.Object;
+	}
+
+	// Error if using below : because of playercontroller called before asset loaded?
+	// anyway, pick in controller BP
+	//static ConstructorHelpers::FObjectFinder<UInputMappingContext> ContextRef(TEXT("/Script/EnhancedInput.InputMappingContext'/Game/Input/IMC_System.IMC_System'"));
+	//if (ContextRef.Object)
+	//{
+	//	IMC_System = ContextRef.Object;
+	//}
+
+
+
 }
 
 void AHRPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+	{
+		Subsystem->AddMappingContext(IMC_System, 0);
+	}
+
 	FInputModeGameOnly GameOnlyInputMode;
 	SetInputMode(GameOnlyInputMode);
+
 
 }
 
@@ -65,3 +89,38 @@ void AHRPlayerController::RetryLevel()
 {
 	UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()), false);
 }
+
+void AHRPlayerController::SetupInputComponent()
+{
+	Super::SetupInputComponent();
+
+	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
+	{
+		EnhancedInputComponent->BindAction(TogglePauseGameAction, ETriggerEvent::Triggered, this, &AHRPlayerController::TogglePauseMenu);
+	}
+
+
+}
+
+void AHRPlayerController::TogglePauseMenu()
+{
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, TEXT("TogglePauseMenu() Called!"));
+	}
+
+	if (IsValid(PauseGameMenuWidgetClass))
+	{
+		UUserWidget* PauseMenuWidget = CreateWidget<UUserWidget>(this, PauseGameMenuWidgetClass);
+		if (IsValid(PauseMenuWidget))
+		{
+			PauseMenuWidget->AddToViewport();
+			SetPause(true);
+			FInputModeUIOnly InputMode;
+			SetInputMode(InputMode);
+			bShowMouseCursor = true;
+		}
+	}
+}
+
+

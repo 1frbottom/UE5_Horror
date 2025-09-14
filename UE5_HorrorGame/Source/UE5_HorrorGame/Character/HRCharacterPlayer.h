@@ -29,6 +29,7 @@ class UHRWidgetComponent;
 class AHRItemBase;
 class AHRInteractableActorBase;
 class UTimelineComponent;
+class UInputMappingContext;
 
 UENUM()
 enum class ECharacterControlType : uint8
@@ -154,6 +155,9 @@ protected:
 
 	void ChangeCharacterControl();
 	void SetCharacterControl(ECharacterControlType NewCharacterControlType);
+
+	UPROPERTY()
+	TObjectPtr<UInputMappingContext> CurrentCharacterIMC; // << 2. 이 줄 추가
 
 	// move
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", Meta = (AllowPrivateAccess = "true"))
