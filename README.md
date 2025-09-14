@@ -17,7 +17,8 @@
 	-> WASD : 이동, LCtrl : 숙이기, LShift : 달리기<br>
 	-> F : 상호작용, ESC : 일시정지<br><br>
 
-- 프리뷰<bf>
+- 프리뷰<br>
+	-> <img src="[https://...](https://github.com/user-attachments/assets/bd2bd75f-d24c-4fd5-a075-8399f6eb7300)" alt="Gif1" width="50%"
 	-> ![게임시작](https://github.com/user-attachments/assets/bd2bd75f-d24c-4fd5-a075-8399f6eb7300)<br>
  	-> ![서랍](https://github.com/user-attachments/assets/3469f01b-d25a-4738-abb6-9f46c3661995)<br>
   	-> ![정면](https://github.com/user-attachments/assets/cb1401e9-499a-44c7-892e-1d381c105fea)<br>
