@@ -5,7 +5,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "HRUIManagerComponent.h"
+
 #include "HRPlayerController.generated.h"
+
+class UInputAction;
+class UInputMappingContext;
 
 /**
  * 
@@ -20,6 +24,8 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+
+	virtual void SetupInputComponent() override;
 
 // UI Manager
 public:
@@ -44,4 +50,21 @@ protected:
 
 private:
 	FTimerHandle RestartTimerHandle;
+
+// Pause Menu
+protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	TSubclassOf<class UUserWidget> PauseGameMenuWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> TogglePauseGameAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputMappingContext> IMC_System;
+
+	void TogglePauseMenu();
+
+
+
+
 };
