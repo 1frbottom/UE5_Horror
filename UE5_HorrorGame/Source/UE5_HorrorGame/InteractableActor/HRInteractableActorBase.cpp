@@ -16,10 +16,12 @@ AHRInteractableActorBase::AHRInteractableActorBase()
     // Static Mesh
         Mesh1 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh1"));
         Mesh1->SetupAttachment(RootComponent);
+        Mesh1->SetCollisionProfileName(TEXT("InteractableActorBase_Mesh"));
 
         Mesh2 = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh2"));
         Mesh2->SetupAttachment(RootComponent);
         Mesh2->SetRelativeLocation(FVector(0.f, 100.f, 0.f));
+        Mesh2->SetCollisionProfileName(TEXT("InteractableActorBase_Mesh"));
 
     // box collision component
         InteractionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionBox"));
