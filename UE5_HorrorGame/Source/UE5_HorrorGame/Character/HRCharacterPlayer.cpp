@@ -62,7 +62,7 @@ AHRCharacterPlayer::AHRCharacterPlayer()
 	GetCharacterMovement()->MaxWalkSpeedCrouched = 100.0f;
 
 	WalkSpeed = 150.0f;
-	SprintSpeed = 250.0f;
+	SprintSpeed = 300.0f;
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.0f;
 
@@ -361,10 +361,10 @@ void AHRCharacterPlayer::PostInitializeComponents()
 	Super::PostInitializeComponents();
 
 	Stat->OnHpZero.AddUObject(this, &AHRCharacterPlayer::SetDead);
+
 	Stat->OnStaminaChanged.AddUObject(this, &AHRCharacterPlayer::OnStaminaChanged);
 
 	Stat->OnHpChanged.AddUObject(this, &AHRCharacterPlayer::OnHpChanged);
-
 
 }
 

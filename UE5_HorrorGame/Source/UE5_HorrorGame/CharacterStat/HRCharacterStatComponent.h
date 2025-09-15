@@ -12,12 +12,12 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnHpChangedDelegate, float /*CurrentHp*/);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnStatChangedDelegate, const FHRCharacterStat& /*BaseStat*/, const FHRCharacterStat& /*ModifierStat*/);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnStaminaChangedDelegate, float /*CurrentStamina*/);
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class UE5_HORRORGAME_API UHRCharacterStatComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
+public:
 	UHRCharacterStatComponent();
 
 protected:
@@ -53,7 +53,7 @@ protected:
 	void SetHp(float NewHp);
 	void SetStamina(float NewStamina);
 
-// provided by DataTable excel ( Singleton )
+	// provided by DataTable excel ( Singleton )
 	UPROPERTY(Transient, VisibleInstanceOnly, Category = Stat)
 	float CurrentLevel;
 
@@ -71,5 +71,5 @@ protected:
 
 	UPROPERTY(Transient, VisibleInstanceOnly, Category = Stat, Meta = (AllowPrivateAccess = "true"))
 	FHRCharacterStat ModifierStat;
-		
+
 };
