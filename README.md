@@ -19,9 +19,9 @@
 
 - 프리뷰<br>
 	-> ![Gif_1](https://github.com/user-attachments/assets/bd2bd75f-d24c-4fd5-a075-8399f6eb7300)<br>
- 	-> ![Gif_2](https://github.com/user-attachments/assets/3469f01b-d25a-4738-abb6-9f46c3661995)<br>
-  	-> ![Gif_3](https://github.com/user-attachments/assets/cb1401e9-499a-44c7-892e-1d381c105fea)<br>
-  	-> ![Gif_4](https://github.com/user-attachments/assets/01924012-172c-44e0-982f-5ac0bb5850b2)<br><br>
+ 	 ![Gif_2](https://github.com/user-attachments/assets/3469f01b-d25a-4738-abb6-9f46c3661995)<br>
+  	 ![Gif_3](https://github.com/user-attachments/assets/cb1401e9-499a-44c7-892e-1d381c105fea)<br>
+  	 ![Gif_4](https://github.com/user-attachments/assets/01924012-172c-44e0-982f-5ac0bb5850b2)<br><br>
 
 - 기술 문서<br>
 	-> [언리얼엔진5_공포게임_기술문서.pdf](https://github.com/user-attachments/files/22330252/5_.pdf)<br><br>
