@@ -26,6 +26,6 @@
 - 기술 문서<br>
 	- [언리얼엔진5_공포게임_기술문서.pdf](https://github.com/user-attachments/files/22330252/5_.pdf)<br><br>
 
-- 첫 언리얼 프로젝트입니다.<br><br>
+- 첫 언리얼 프로젝트로, 2명이 각각 디자인과 프로그래밍을 맡아 제작하였습니다.<br><br>
 
 - 애셋의 출처는 대부분 Fab, 그 외는 sketchfab 입니다.
