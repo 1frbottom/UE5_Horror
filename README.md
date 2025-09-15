@@ -23,6 +23,9 @@
   	-> ![Gif_3](https://github.com/user-attachments/assets/cb1401e9-499a-44c7-892e-1d381c105fea)<br>
   	-> ![Gif_4](https://github.com/user-attachments/assets/01924012-172c-44e0-982f-5ac0bb5850b2)<br><br>
 
+- 기술 문서<br>
+	-> [언리얼엔진5_공포게임_기술문서.pdf](https://github.com/user-attachments/files/22330252/5_.pdf)<br><br>
+
 - 첫 언리얼 프로젝트입니다.<br><br>
 
 - 애셋의 출처는 대부분 Fab, 그 외는 sketchfab 입니다.
