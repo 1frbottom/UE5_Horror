@@ -20,10 +20,12 @@
 	- F : 상호작용, M : 지도보기(획득시), ESC : 일시정지<br><br>
 
 - 프리뷰<br>
-     ![Gif_1](https://github.com/user-attachments/assets/bd2bd75f-d24c-4fd5-a075-8399f6eb7300)
- 	 ![Gif_2](https://github.com/user-attachments/assets/3469f01b-d25a-4738-abb6-9f46c3661995)
-  	 ![Gif_3](https://github.com/user-attachments/assets/cb1401e9-499a-44c7-892e-1d381c105fea)
-  	 ![Gif_4](https://github.com/user-attachments/assets/01924012-172c-44e0-982f-5ac0bb5850b2)
+	![Gif_1](https://github.com/user-attachments/assets/bd2bd75f-d24c-4fd5-a075-8399f6eb7300)
+	![Gif_2](https://github.com/user-attachments/assets/3469f01b-d25a-4738-abb6-9f46c3661995)
+	![Gif_3](https://github.com/user-attachments/assets/cb1401e9-499a-44c7-892e-1d381c105fea)
+	![Gif_4](https://github.com/user-attachments/assets/01924012-172c-44e0-982f-5ac0bb5850b2)
+	![Gif_5](https://github.com/user-attachments/assets/6613d846-274e-48e2-bbc8-0c49847f4d0f)
+
 
 - 기술 문서
 	- 아래 링크 클릭시 pdf가 즉시 다운로드됩니다.<br> 	
