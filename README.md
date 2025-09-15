@@ -1,6 +1,7 @@
 싱글 공포게임<br><br>
 
-- 픽션인 SCP의 SCP-1983을 재구성한 배경으로, 집 안에서 시작합니다.<br><br>
+- 픽션인 SCP의 SCP-1983을 재구성한 배경으로, 집 안에서 시작합니다.<br>
+	- 1층의 특정 잠긴 문을 열어 탈출하면 1스테이지가 클리어됩니다.<br><br>
 
 - UE 5.1.1 -> UE 5.3.2 -> UE 5.4.4 (현재)<br><br>
 
@@ -16,7 +17,7 @@
 	
 - 조작방법<br>
 	- WASD : 이동, LCtrl : 숙이기, LShift : 달리기<br><br>
-	- F : 상호작용, ESC : 일시정지<br><br>
+	- F : 상호작용, M : 지도보기(획득시), ESC : 일시정지<br><br>
 
 - 프리뷰<br>
      ![Gif_1](https://github.com/user-attachments/assets/bd2bd75f-d24c-4fd5-a075-8399f6eb7300)
