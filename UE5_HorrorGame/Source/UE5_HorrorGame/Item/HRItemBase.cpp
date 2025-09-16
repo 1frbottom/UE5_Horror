@@ -7,6 +7,8 @@
 // Sets default values
 AHRItemBase::AHRItemBase()
 {
+	TraceHitBox->SetBoxExtent(FVector(20.f));
+
 
 }
 
