@@ -45,7 +45,7 @@ AHRCharacterNonPlayer::AHRCharacterNonPlayer()
 
 	// Stat
 		CurrentHp = MaxHp;
-		GetCharacterMovement()->MaxWalkSpeed = 400.0f;	// should randomize?
+		GetCharacterMovement()->MaxWalkSpeed = 350.0f;	// should randomize?
 
 	// Audio
 		HeartBeatSoundComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("HeartBeatSoundComponent"));
