@@ -7,7 +7,7 @@
 - 기술 문서
   	- 플레이어캐릭터 & 고스트캐릭터 특정 로직 관련
 	- 아래 링크 클릭시 pdf가 즉시 다운로드됩니다.<br> 	
-	- [언리얼엔진5_공포게임_기술문서.pdf](https://github.com/user-attachments/files/22330252/5_.pdf)<br><br>
+	- [기술문서 링크](https://github.com/user-attachments/files/22330252/5_.pdf)<br><br>
 
 - 프리뷰<br>
 	- [유튜브 링크](https://youtu.be/4RwZF5kehHY?si=qTP8RrAY4gl4cQl8)<br>
