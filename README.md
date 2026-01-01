@@ -10,7 +10,7 @@
 	- [언리얼엔진5_공포게임_기술문서.pdf](https://github.com/user-attachments/files/22330252/5_.pdf)<br><br>
 
 - 프리뷰<br>
-	- [https://www.youtube.com/watch?v=ENcxL7wKXj8](https://youtu.be/4RwZF5kehHY?si=qTP8RrAY4gl4cQl8)<br>
+	- [유튜브 링크](https://youtu.be/4RwZF5kehHY?si=qTP8RrAY4gl4cQl8)<br>
 	![Gif_1](https://github.com/user-attachments/assets/bd2bd75f-d24c-4fd5-a075-8399f6eb7300)
 	![Gif_2](https://github.com/user-attachments/assets/3469f01b-d25a-4738-abb6-9f46c3661995)
 	![Gif_3](https://github.com/user-attachments/assets/cb1401e9-499a-44c7-892e-1d381c105fea)
