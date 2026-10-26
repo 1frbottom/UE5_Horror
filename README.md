@@ -28,13 +28,18 @@
 
 ## 핵심 구현
 
-| 항목 | 구현 | 코드 / 위치 |
-| :--- | :---: | :--- |
-| 고스트 AI 컨트롤러 (BT / BB 실행) | C++ | [HRAIController](UE5_HorrorGame/Source/UE5_HorrorGame/AI/HRAIController.cpp#L28-L58) |
-| 고스트 공격 Task / 공격 판정 | C++ | [BTTask_Attack](UE5_HorrorGame/Source/UE5_HorrorGame/AI/BTTask_Attack.cpp#L15-L44), [AttackHitCheck](UE5_HorrorGame/Source/UE5_HorrorGame/Character/HRCharacterNonPlayer.cpp#L242-L268) |
-| Sight / Hearing 감지, 행동 흐름 구성 | Blueprint / BTree | `Content/Blueprint/Ghost/` 의 `BP_AIController`, `BT_GhostCharacter_Perception` |
-| 시점 전환 (1인칭 / 숄더 / 쿼터) | C++ | [SetCharacterControl](UE5_HorrorGame/Source/UE5_HorrorGame/Character/HRCharacterPlayer.cpp#L591-L649) |
-| 상호작용 실행 (인터페이스) | C++ + Blueprint | [Interact](UE5_HorrorGame/Source/UE5_HorrorGame/Character/HRCharacterPlayer.cpp#L1093-L1099), [포커스 처리](UE5_HorrorGame/Source/UE5_HorrorGame/InteractableActor/HRInteractableActorBase.cpp#L70-L144) |
+### 1. 고스트 AI
+
+* [AI 컨트롤러](UE5_HorrorGame/Source/UE5_HorrorGame/AI/HRAIController.cpp#L28-L58)(BTree / BBoard 실행)
+* [공격 Task](UE5_HorrorGame/Source/UE5_HorrorGame/AI/BTTask_Attack.cpp#L15-L44)
+* [공격 판정](UE5_HorrorGame/Source/UE5_HorrorGame/Character/HRCharacterNonPlayer.cpp#L242-L268)
+* Sight & Hearing 감지, 행동 흐름 구성 (BP / BTree)
+
+### 2. 플레이어
+
+* [시점 전환](UE5_HorrorGame/Source/UE5_HorrorGame/Character/HRCharacterPlayer.cpp#L591-L649)
+* [상호작용 실행](UE5_HorrorGame/Source/UE5_HorrorGame/Character/HRCharacterPlayer.cpp#L1093-L1099)
+* [상호작용 포커스 처리](UE5_HorrorGame/Source/UE5_HorrorGame/InteractableActor/HRInteractableActorBase.cpp#L70-L144)
 
 <br>
 
