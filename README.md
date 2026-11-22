@@ -7,7 +7,7 @@
 </p>
 <p align="center">
   <img src="./preview_img/img_2.gif" width="295" />
-  <img src="./preview_img/img_3gif" width="295" />
+  <img src="./preview_img/img_3.gif" width="295" />
 </p>
 
 * 유튜브 ([Preview](https://youtu.be/4RwZF5kehHY?si=qTP8RrAY4gl4cQl8))
