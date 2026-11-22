@@ -3,11 +3,11 @@
 > UE5 싱글 플레이 공포 게임
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/bd2bd75f-d24c-4fd5-a075-8399f6eb7300" width="600" />
+  <img src=".preview_img/img_1.gif" width="600" />
 </p>
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/3469f01b-d25a-4738-abb6-9f46c3661995" width="295" />
-  <img src="https://github.com/user-attachments/assets/cb1401e9-499a-44c7-892e-1d381c105fea" width="295" />
+  <img src=".preview_img/img_2.gif" width="295" />
+  <img src=".preview_img/img_3gif" width="295" />
 </p>
 
 * 유튜브 ([Preview](https://youtu.be/4RwZF5kehHY?si=qTP8RrAY4gl4cQl8))
